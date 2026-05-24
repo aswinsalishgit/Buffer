@@ -1,9 +1,10 @@
 package com.aswinsalish.buffer.core.theme
 
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.unit.dp
 
 private val BufferColorScheme = darkColorScheme(
     primary = AccentColor,
@@ -22,9 +23,9 @@ fun BufferTheme(content: @Composable () -> Unit) {
         colorScheme = BufferColorScheme,
         typography = FuturisticTypography,
         shapes = androidx.compose.material3.Shapes(
-            small = RectangleShape,
-            medium = RectangleShape,
-            large = RectangleShape
+            small = RoundedCornerShape(0.dp),
+            medium = RoundedCornerShape(0.dp),
+            large = RoundedCornerShape(0.dp)
         ),
         content = content
     )
