@@ -6,16 +6,15 @@ data class GameState(
     val playerScore: Int = 0,
     val botScore: Int = 0,
     val roundCount: Int = 1,
-    val gamePhase: GamePhase = GamePhase.AWAITING_INPUT,
+    val currentPhase: TurnPhase = TurnPhase.SELECTING,
     val currentRoundPlay: RoundPlay? = null,
     val matchWinner: String? = null,
     val matchHistory: List<RoundPlay> = emptyList()
 )
 
-enum class GamePhase {
-    AWAITING_INPUT,
-    EXECUTING,
-    ROUND_OVER,
+enum class TurnPhase {
+    SELECTING,
+    REVEALED,
     GAME_OVER
 }
 

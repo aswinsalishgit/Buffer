@@ -1,23 +1,20 @@
 package com.aswinsalish.buffer.game.viewmodel
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import com.aswinsalish.buffer.game.state.GamePhase
+import com.aswinsalish.buffer.game.state.TurnPhase
 import com.aswinsalish.buffer.game.state.GameState
 import com.aswinsalish.buffer.game.state.RoundPlay
 import com.aswinsalish.buffer.game.state.RoundResult
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 
 class GameViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(GameState())
     val uiState: StateFlow<GameState> = _uiState.asStateFlow()
 
-    fun processRound(playerRight: Int, playerLeft: Int): RoundResult {
+    private fun processRound(playerRight: Int, playerLeft: Int): RoundResult {
         val currentState = _uiState.value
 
         // Validate playerRight against playerBuffer
@@ -79,49 +76,35 @@ class GameViewModel : ViewModel() {
     }
 
     fun executeTurn(playerRightHand: Int, playerLeftHandGuess: Int) {
-        if (_uiState.value.gamePhase != GamePhase.AWAITING_INPUT) return
+        if (_uiState.value.currentPhase != TurnPhase.SELECTING) return
 
         val result = processRound(playerRightHand, playerLeftHandGuess)
         if (result is RoundResult.Error) {
-            // Log or expose the error to the UI. For now, simply return.
             return
         }
 
         val successResult = result as RoundResult.Success
+        val newState = successResult.updatedState
+        
+        if (newState.playerScore >= 3 || newState.botScore >= 3) {
+            val winner = if (newState.playerScore >= 3 && newState.botScore >= 3) "Tie" 
+                         else if (newState.playerScore >= 3) "Player" 
+                         else "Bot"
+            _uiState.value = newState.copy(currentPhase = TurnPhase.GAME_OVER, matchWinner = winner)
+        } else {
+            // Update the state with the bot's moves and the round winner, but also change currentPhase to TurnPhase.REVEALED
+            _uiState.value = newState.copy(currentPhase = TurnPhase.REVEALED)
+        }
+    }
 
-        _uiState.update { it.copy(gamePhase = GamePhase.EXECUTING) }
-
-        viewModelScope.launch {
-            // Simulate bot thinking
-            delay(1000)
-
-            // Apply the processed updated state to the UI Flow
-            _uiState.value = successResult.updatedState
-
-            delay(1000) // Time to show the round results
-
-            val newPlayerScore = _uiState.value.playerScore
-            val newBotScore = _uiState.value.botScore
-
-            if (newPlayerScore >= 3 || newBotScore >= 3) {
-                val winner = if (newPlayerScore >= 3 && newBotScore >= 3) "Tie" 
-                             else if (newPlayerScore >= 3) "Player" 
-                             else "Bot"
-                _uiState.update { 
-                    it.copy(gamePhase = GamePhase.GAME_OVER, matchWinner = winner) 
-                }
-            } else {
-                _uiState.update { 
-                    it.copy(gamePhase = GamePhase.ROUND_OVER) 
-                }
-                delay(2000)
-                _uiState.update {
-                    it.copy(
-                        gamePhase = GamePhase.AWAITING_INPUT,
-                        roundCount = it.roundCount + 1,
-                        currentRoundPlay = null
-                    )
-                }
+    fun startNextRound() {
+        if (_uiState.value.currentPhase == TurnPhase.REVEALED) {
+            _uiState.update {
+                it.copy(
+                    currentPhase = TurnPhase.SELECTING,
+                    roundCount = it.roundCount + 1,
+                    currentRoundPlay = null
+                )
             }
         }
     }
