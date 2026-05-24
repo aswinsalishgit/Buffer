@@ -53,108 +53,131 @@ fun GameScreen(viewModel: GameViewModel = viewModel()) {
             }
         }
 
-        // Center Area dynamically adapts based on phase
+        // Center Area (Grid remains persistent in background)
         Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-            when (uiState.currentPhase) {
-                TurnPhase.SELECTING -> {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        StackHeader("YOUR MOVE (RIGHT HAND)")
-                        Row(
-                            horizontalArrangement = Arrangement.SpaceEvenly,
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp)
-                        ) {
-                            (1..5).forEach { num ->
-                                val isOnCooldown = uiState.playerBuffer.contains(num)
-                                val isSelected = selectedRightHand == num
-                                LoadoutSquareButton(
-                                    number = num,
-                                    isSelected = isSelected,
-                                    isOnCooldown = isOnCooldown,
-                                    onClick = { selectedRightHand = num }
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(32.dp))
-
-                        StackHeader("YOUR READ (LEFT HAND)")
-                        Row(
-                            horizontalArrangement = Arrangement.SpaceEvenly,
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp)
-                        ) {
-                            (1..5).forEach { num ->
-                                val isSelected = selectedLeftHand == num
-                                LoadoutSquareButton(
-                                    number = num,
-                                    isSelected = isSelected,
-                                    isOnCooldown = false, // Left hand doesn't have a cooldown in standard rules
-                                    onClick = { selectedLeftHand = num }
-                                )
-                            }
-                        }
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                StackHeader("YOUR MOVE (RIGHT HAND)")
+                Row(
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp)
+                ) {
+                    (1..5).forEach { num ->
+                        val isOnCooldown = uiState.playerBuffer.contains(num)
+                        val isSelected = selectedRightHand == num
+                        LoadoutSquareButton(
+                            number = num,
+                            isSelected = isSelected,
+                            isOnCooldown = isOnCooldown,
+                            onClick = { if (uiState.currentPhase == TurnPhase.SELECTING) selectedRightHand = num }
+                        )
                     }
                 }
-                TurnPhase.REVEALED -> {
-                    val play = uiState.currentRoundPlay
-                    if (play != null) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                StackHeader("YOUR READ (LEFT HAND)")
+                Row(
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp)
+                ) {
+                    (1..5).forEach { num ->
+                        val isSelected = selectedLeftHand == num
+                        LoadoutSquareButton(
+                            number = num,
+                            isSelected = isSelected,
+                            isOnCooldown = false,
+                            onClick = { if (uiState.currentPhase == TurnPhase.SELECTING) selectedLeftHand = num }
+                        )
+                    }
+                }
+            }
+
+            // Modal Overlays
+            if (uiState.currentPhase == TurnPhase.REVEALED) {
+                val play = uiState.currentRoundPlay
+                if (play != null) {
+                    androidx.compose.ui.window.Dialog(onDismissRequest = { }) {
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background),
+                            border = BorderStroke(2.dp, Color.LightGray),
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            StackHeader("COMBAT LOG")
-                            Spacer(modifier = Modifier.height(16.dp))
-                            
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .border(1.dp, Color.Gray)
-                                    .padding(16.dp)
+                            Column(
+                                modifier = Modifier.padding(24.dp).fillMaxWidth(),
+                                horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-                                    Text("YOUR RIGHT HAND VS BOT'S GUESS", style = MaterialTheme.typography.titleMedium)
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    Text("You Played: ${play.playerRightHand}  |  Bot Guessed: ${play.botLeftHandGuess}")
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    if (play.botWonPoint) Text("BOT WON A POINT", color = MaterialTheme.colorScheme.error)
-                                    else Text("BOT MISSED", color = AccentColor)
+                                val resultText = when {
+                                    play.playerWonPoint && play.botWonPoint -> "DRAW"
+                                    play.playerWonPoint -> "YOU WIN!"
+                                    play.botWonPoint -> "BOT WINS"
+                                    else -> "NO POINTS"
                                 }
-                            }
-                            
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .border(1.dp, Color.Gray)
-                                    .padding(16.dp)
-                            ) {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-                                    Text("YOUR GUESS VS BOT'S RIGHT HAND", style = MaterialTheme.typography.titleMedium)
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    Text("You Guessed: ${play.playerLeftHandGuess}  |  Bot Played: ${play.botRightHand}")
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    if (play.playerWonPoint) Text("YOU WON A POINT", color = AccentColor)
-                                    else Text("YOU MISSED", color = MaterialTheme.colorScheme.error)
+                                val resultColor = if (play.playerWonPoint && !play.botWonPoint) AccentColor else if (play.botWonPoint) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
+                                
+                                Text("ROUND RESULT:", style = MaterialTheme.typography.titleMedium, color = Color.LightGray)
+                                Text(resultText, style = MaterialTheme.typography.headlineMedium, color = resultColor)
+                                
+                                Spacer(modifier = Modifier.height(24.dp))
+                                
+                                // Column A
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text("YOUR STATE: ${play.playerRightHand} vs BOT READ: ${play.botLeftHandGuess}", 
+                                         style = MaterialTheme.typography.bodyLarge, 
+                                         color = if (!play.botWonPoint) AccentColor else Color.Gray)
                                 }
+                                
+                                Spacer(modifier = Modifier.height(16.dp))
+                                
+                                // Column B
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text("YOUR READ: ${play.playerLeftHandGuess} vs BOT STATE: ${play.botRightHand}", 
+                                         style = MaterialTheme.typography.bodyLarge, 
+                                         color = if (play.playerWonPoint) AccentColor else Color.Gray)
+                                }
+                                
+                                Spacer(modifier = Modifier.height(32.dp))
+                                
+                                BlockyButton(
+                                    text = "NEXT ROUND",
+                                    onClick = {
+                                        selectedRightHand = null
+                                        selectedLeftHand = null
+                                        viewModel.startNextRound()
+                                    },
+                                    modifier = Modifier.fillMaxWidth().height(56.dp)
+                                )
                             }
                         }
                     }
                 }
-                TurnPhase.GAME_OVER -> {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
+            } else if (uiState.currentPhase == TurnPhase.GAME_OVER) {
+                androidx.compose.ui.window.Dialog(onDismissRequest = { }) {
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background),
+                        border = BorderStroke(2.dp, AccentColor),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        StackHeader("MATCH CONCLUDED")
-                        Spacer(modifier = Modifier.height(32.dp))
-                        Text(
-                            text = "WINNER: ${uiState.matchWinner?.uppercase()}", 
-                            style = MaterialTheme.typography.headlineLarge,
-                            color = AccentColor
-                        )
+                        Column(
+                            modifier = Modifier.padding(24.dp).fillMaxWidth(),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text("MATCH CONCLUDED", style = MaterialTheme.typography.titleMedium, color = Color.LightGray)
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text("WINNER: ${uiState.matchWinner?.uppercase()}", style = MaterialTheme.typography.headlineLarge, color = AccentColor)
+                            Spacer(modifier = Modifier.height(32.dp))
+                            BlockyButton(
+                                text = "PLAY AGAIN",
+                                onClick = {
+                                    selectedRightHand = null
+                                    selectedLeftHand = null
+                                    viewModel.resetGame()
+                                },
+                                modifier = Modifier.fillMaxWidth().height(56.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -165,41 +188,19 @@ fun GameScreen(viewModel: GameViewModel = viewModel()) {
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.fillMaxWidth()
         ) {
-            when (uiState.currentPhase) {
-                TurnPhase.SELECTING -> {
-                    BlockyButton(
-                        text = "EXECUTE",
-                        onClick = {
-                            if (selectedRightHand != null && selectedLeftHand != null) {
-                                viewModel.executeTurn(selectedRightHand!!, selectedLeftHand!!)
-                            }
-                        },
-                        enabled = selectedRightHand != null && selectedLeftHand != null,
-                        modifier = Modifier.fillMaxWidth().height(64.dp)
-                    )
-                }
-                TurnPhase.REVEALED -> {
-                    BlockyButton(
-                        text = "NEXT ROUND",
-                        onClick = {
-                            selectedRightHand = null
-                            selectedLeftHand = null
-                            viewModel.startNextRound()
-                        },
-                        modifier = Modifier.fillMaxWidth().height(64.dp)
-                    )
-                }
-                TurnPhase.GAME_OVER -> {
-                    BlockyButton(
-                        text = "PLAY AGAIN",
-                        onClick = {
-                            selectedRightHand = null
-                            selectedLeftHand = null
-                            viewModel.resetGame()
-                        },
-                        modifier = Modifier.fillMaxWidth().height(64.dp)
-                    )
-                }
+            if (uiState.currentPhase == TurnPhase.SELECTING) {
+                BlockyButton(
+                    text = "EXECUTE",
+                    onClick = {
+                        if (selectedRightHand != null && selectedLeftHand != null) {
+                            viewModel.executeTurn(selectedRightHand!!, selectedLeftHand!!)
+                        }
+                    },
+                    enabled = selectedRightHand != null && selectedLeftHand != null,
+                    modifier = Modifier.fillMaxWidth().height(64.dp)
+                )
+            } else {
+                Spacer(modifier = Modifier.height(64.dp))
             }
         }
     }
