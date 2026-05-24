@@ -7,9 +7,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -18,6 +17,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.aswinsalish.buffer.core.components.HelpDialog
+import com.aswinsalish.buffer.core.components.SettingsDialog
 import com.aswinsalish.buffer.core.components.TacticalButton
 import com.aswinsalish.buffer.core.components.BlockyTextField
 import com.aswinsalish.buffer.core.components.StackHeader
@@ -29,6 +30,7 @@ import com.aswinsalish.buffer.game.viewmodel.GameViewModel
 
 @Composable
 fun GameScreen(
+    onExitPlay: () -> Unit,
     gameViewModel: GameViewModel = viewModel(),
     prefsViewModel: UserPreferencesViewModel = viewModel()
 ) {
@@ -37,8 +39,7 @@ fun GameScreen(
     var selectedRightHand by remember { mutableStateOf<Int?>(null) }
     var selectedLeftHand by remember { mutableStateOf<Int?>(null) }
 
-    var showHelpDialog by remember { mutableStateOf(false) }
-    var showSettingsDialog by remember { mutableStateOf(false) }
+    var showPauseDialog by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -54,9 +55,7 @@ fun GameScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = { showHelpDialog = true }) {
-                Icon(Icons.Default.Info, contentDescription = "Help", tint = AccentColor)
-            }
+            Spacer(modifier = Modifier.width(48.dp)) // To keep text centered
             Text(
                 text = "ROUND ${uiState.roundCount} | YOUR SCORE ${uiState.playerScore} | BOT SCORE ${uiState.botScore}",
                 style = MaterialTheme.typography.titleMedium,
@@ -64,8 +63,8 @@ fun GameScreen(
                 textAlign = TextAlign.Center,
                 modifier = Modifier.weight(1f)
             )
-            IconButton(onClick = { showSettingsDialog = true }) {
-                Icon(Icons.Default.Settings, contentDescription = "Settings", tint = AccentColor)
+            IconButton(onClick = { showPauseDialog = true }) {
+                Icon(Icons.Default.Menu, contentDescription = "Pause", tint = AccentColor)
             }
         }
 
@@ -201,14 +200,11 @@ fun GameScreen(
             }
 
             // Auxiliary Popups
-            if (showHelpDialog) {
-                HelpDialog(onDismiss = { showHelpDialog = false })
-            }
-
-            if (showSettingsDialog) {
-                SettingsDialog(
-                    viewModel = prefsViewModel,
-                    onDismiss = { showSettingsDialog = false }
+            if (showPauseDialog) {
+                PauseDialog(
+                    onDismiss = { showPauseDialog = false },
+                    onExitPlay = onExitPlay,
+                    prefsViewModel = prefsViewModel
                 )
             }
         }
@@ -237,135 +233,65 @@ fun GameScreen(
 }
 
 @Composable
-fun HelpDialog(onDismiss: () -> Unit) {
-    androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
-        Card(
-            colors = CardDefaults.cardColors(containerColor = BackgroundColor),
-            border = BorderStroke(2.dp, Color.LightGray),
-            modifier = Modifier.fillMaxWidth().fillMaxHeight(0.8f)
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(24.dp)
+fun PauseDialog(
+    onDismiss: () -> Unit,
+    onExitPlay: () -> Unit,
+    prefsViewModel: UserPreferencesViewModel
+) {
+    var showHelp by remember { mutableStateOf(false) }
+    var showSettings by remember { mutableStateOf(false) }
+
+    if (showHelp) {
+        HelpDialog(onDismiss = { showHelp = false })
+    } else if (showSettings) {
+        SettingsDialog(viewModel = prefsViewModel, onDismiss = { showSettings = false })
+    } else {
+        androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = BackgroundColor),
+                border = BorderStroke(2.dp, Color.LightGray),
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Text(
-                    text = "DATABASE ARCHIVE",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = AccentColor,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                
                 Column(
                     modifier = Modifier
-                        .weight(1f)
-                        .verticalScroll(rememberScrollState())
+                        .fillMaxWidth()
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    StackHeader("SECTION 1: HOW TO PLAY")
                     Text(
-                        text = "Buffer is a 1v1 psychological combat simulation. Each round, you must simultaneously lock in a MOVE (Right Hand) and a READ (Left Hand) by selecting numbers from 1 to 5. Your MOVE dictates your attack posture, while your READ is an attempt to predict the opponent's MOVE.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface
+                        text = "PAUSED",
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = AccentColor
+                    )
+                    Spacer(modifier = Modifier.height(32.dp))
+
+                    TacticalButton(
+                        text = "RESUME",
+                        onClick = onDismiss,
+                        modifier = Modifier.fillMaxWidth().height(56.dp)
                     )
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    StackHeader("SECTION 2: GAME RULES")
-                    Text(
-                        text = "If your READ matches the opponent's MOVE exactly, you score a point. If both players successfully read each other, it's a DRAW and both players score a point. If neither reads the opponent correctly, the round ends with NO POINTS. The first player to reach 5 points wins the match.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface
+                    TacticalButton(
+                        text = "EXIT PLAY",
+                        onClick = onExitPlay,
+                        modifier = Modifier.fillMaxWidth().height(56.dp)
                     )
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    StackHeader("SECTION 3: MASTERY & THE BUFFER")
-                    Text(
-                        text = "The core of the simulation relies on THE BUFFER. When you execute a MOVE (Right Hand), that number is locked into your physical buffer and goes on cooldown for the next 2 rounds. You cannot select that number as a MOVE again until it cycles out of the buffer. The bot tracks your buffer and analyzes your historical patterns to optimize its defensive evasion and offensive predictions. Master the cooldown cycle to manipulate the bot's logic and break its defenses.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface
+                    TacticalButton(
+                        text = "HELP",
+                        onClick = { showHelp = true },
+                        modifier = Modifier.fillMaxWidth().height(56.dp)
                     )
                     Spacer(modifier = Modifier.height(16.dp))
+
+                    TacticalButton(
+                        text = "SETTINGS",
+                        onClick = { showSettings = true },
+                        modifier = Modifier.fillMaxWidth().height(56.dp)
+                    )
                 }
-
-                Spacer(modifier = Modifier.height(16.dp))
-                TacticalButton(
-                    text = "CLOSE ARCHIVE",
-                    onClick = onDismiss,
-                    modifier = Modifier.fillMaxWidth().height(56.dp)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun SettingsDialog(viewModel: UserPreferencesViewModel, onDismiss: () -> Unit) {
-    val prefsState by viewModel.preferencesState.collectAsState()
-    val initialUsername = (prefsState as? com.aswinsalish.buffer.core.data.PreferencesState.Loaded)?.prefs?.username ?: ""
-    var editUsername by remember { mutableStateOf(initialUsername) }
-
-    androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
-        Card(
-            colors = CardDefaults.cardColors(containerColor = BackgroundColor),
-            border = BorderStroke(2.dp, Color.LightGray),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "SYSTEM SETTINGS",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = AccentColor
-                )
-                Spacer(modifier = Modifier.height(32.dp))
-
-                BlockyTextField(
-                    value = editUsername,
-                    onValueChange = { editUsername = it },
-                    label = "Edit Callsign",
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = "User Icon",
-                            tint = AccentColor
-                        )
-                    }
-                )
-
-                Spacer(modifier = Modifier.height(32.dp))
-
-                TacticalButton(
-                    text = "SAVE CHANGES",
-                    onClick = {
-                        if (editUsername.isNotBlank()) {
-                            viewModel.completeOnboarding(editUsername)
-                            onDismiss()
-                        }
-                    },
-                    isDisabled = !(editUsername.isNotBlank() && editUsername != initialUsername),
-                    modifier = Modifier.fillMaxWidth().height(56.dp)
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                TacticalButton(
-                    text = "TERMS OF SERVICE",
-                    onClick = { /* TODO: Open TOS Dialog */ },
-                    isDisabled = true,
-                    modifier = Modifier.fillMaxWidth().height(56.dp)
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                TacticalButton(
-                    text = "CLOSE",
-                    onClick = onDismiss,
-                    modifier = Modifier.fillMaxWidth().height(56.dp)
-                )
             }
         }
     }

@@ -6,7 +6,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.aswinsalish.buffer.core.theme.BufferTheme
 import com.aswinsalish.buffer.core.ui.SplashScreen
-import com.aswinsalish.buffer.game.ui.GameScreen
+import com.aswinsalish.buffer.menu.ui.MainMenuScreen
 import com.aswinsalish.buffer.onboarding.ui.OnboardingScreen
 
 @Composable
@@ -23,7 +23,7 @@ fun BufferApp() {
                         }
                     },
                     onNavigateToGame = {
-                        navController.navigate("game") {
+                        navController.navigate("main_menu") {
                             popUpTo("splash") { inclusive = true }
                         }
                     }
@@ -32,14 +32,27 @@ fun BufferApp() {
             composable("onboarding") {
                 OnboardingScreen(
                     onComplete = {
-                        navController.navigate("game") {
+                        navController.navigate("main_menu") {
                             popUpTo("onboarding") { inclusive = true }
                         }
                     }
                 )
             }
+            composable("main_menu") {
+                MainMenuScreen(
+                    onPlayClick = {
+                        navController.navigate("game")
+                    }
+                )
+            }
             composable("game") {
-                GameScreen()
+                com.aswinsalish.buffer.game.ui.GameScreen(
+                    onExitPlay = {
+                        navController.navigate("main_menu") {
+                            popUpTo("main_menu") { inclusive = true }
+                        }
+                    }
+                )
             }
         }
     }
