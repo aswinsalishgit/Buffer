@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlin.random.Random
 
 class GameViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(GameState())
@@ -23,20 +24,7 @@ class GameViewModel : ViewModel() {
             return RoundResult.Error("Invalid move: Right hand is on cooldown.")
         }
 
-        // Bot Right Hand (Defensive)
-        val validBotRights = (1..5).filter { !currentState.botBuffer.contains(it) }
-        
-        // Track the player's last 3 moves and avoid numbers the player has guessed correctly before
-        val recentHistory = currentState.matchHistory.takeLast(3)
-        val playerSuccessfulGuesses = recentHistory.filter { it.playerWonPoint }.map { it.playerLeftHandGuess }.toSet()
-        val safeBotRights = validBotRights.filter { it !in playerSuccessfulGuesses }
-        
-        val botRight = if (safeBotRights.isNotEmpty()) safeBotRights.random() else validBotRights.randomOrNull() ?: 1
-
-        // Bot Left Hand (Offensive)
-        // Analyze playerBuffer to see which numbers are locked. Prioritize guessing available numbers.
-        val availablePlayerHands = (1..5).filter { !currentState.playerBuffer.contains(it) }
-        val botLeft = if (availablePlayerHands.isNotEmpty()) availablePlayerHands.random() else (1..5).random()
+        val (botRight, botLeft) = calculateBotMoves(currentState, currentState.botDifficulty)
 
         // Calculate the winner of the round
         val playerWonPoint = playerLeft == botRight
@@ -118,5 +106,68 @@ class GameViewModel : ViewModel() {
 
     fun resetGame(selectedDifficulty: BotDifficulty = BotDifficulty.MEDIUM) {
         _uiState.value = GameState(botDifficulty = selectedDifficulty)
+    }
+
+    private fun calculateBotMoves(currentState: GameState, difficulty: BotDifficulty): Pair<Int, Int> {
+        val validBotRights = (1..5).filter { !currentState.botBuffer.contains(it) }
+        val playerAvailableMoves = (1..5).filter { !currentState.playerBuffer.contains(it) }
+
+        var botLeft: Int
+        var botRight: Int
+
+        when (difficulty) {
+            BotDifficulty.EASY -> {
+                // EASY: The Grunt
+                botLeft = Random.nextInt(1, 6)
+                botRight = validBotRights.randomOrNull() ?: 1
+            }
+            BotDifficulty.MEDIUM -> {
+                // MEDIUM: The Sniper
+                botLeft = if (playerAvailableMoves.isNotEmpty()) playerAvailableMoves.random() else Random.nextInt(1, 6)
+                
+                val lastPlayerGuess = currentState.playerReadHistory.lastOrNull()
+                val safeBotRights = if (lastPlayerGuess != null && validBotRights.contains(lastPlayerGuess)) {
+                    validBotRights.filter { it != lastPlayerGuess }
+                } else {
+                    validBotRights
+                }
+                
+                botRight = if (safeBotRights.isNotEmpty()) safeBotRights.random() else validBotRights.randomOrNull() ?: 1
+            }
+            BotDifficulty.HARD -> {
+                // HARD: The Grandmaster
+                
+                // botLeft (Offense): Find the number from available moves that the player has played MOST frequently
+                if (playerAvailableMoves.isNotEmpty()) {
+                    val frequencyMap = currentState.playerStateHistory.groupingBy { it }.eachCount()
+                    // Filter frequencies to only include currently available moves
+                    val availableFrequencies = playerAvailableMoves.associateWith { frequencyMap[it] ?: 0 }
+                    val maxFreq = availableFrequencies.values.maxOrNull()
+                    val mostFrequentMoves = availableFrequencies.filter { it.value == maxFreq }.keys.toList()
+                    botLeft = mostFrequentMoves.randomOrNull() ?: playerAvailableMoves.random()
+                } else {
+                    botLeft = Random.nextInt(1, 6)
+                }
+
+                // botRight (Defense): Find the number from valid bot moves that the player guesses LEAST frequently
+                val readFrequencyMap = currentState.playerReadHistory.groupingBy { it }.eachCount()
+                val availableReadFrequencies = validBotRights.associateWith { readFrequencyMap[it] ?: 0 }
+                
+                val minFreq = availableReadFrequencies.values.minOrNull()
+                val leastGuessedMoves = availableReadFrequencies.filter { it.value == minFreq }.keys.toList()
+                val standardBotRight = leastGuessedMoves.randomOrNull() ?: validBotRights.randomOrNull() ?: 1
+                
+                // The Bluff Override: 20% chance to invert logic
+                if (Random.nextFloat() < 0.2f) {
+                    val maxReadFreq = availableReadFrequencies.values.maxOrNull()
+                    val mostGuessedMoves = availableReadFrequencies.filter { it.value == maxReadFreq }.keys.toList()
+                    botRight = mostGuessedMoves.randomOrNull() ?: validBotRights.randomOrNull() ?: 1
+                } else {
+                    botRight = standardBotRight
+                }
+            }
+        }
+        
+        return Pair(botRight, botLeft)
     }
 }
