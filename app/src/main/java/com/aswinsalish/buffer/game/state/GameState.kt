@@ -26,3 +26,11 @@ data class RoundPlay(
     val playerWonPoint: Boolean,
     val botWonPoint: Boolean
 )
+
+sealed class RoundResult {
+    data class Success(
+        val updatedState: GameState,
+        val roundPlay: RoundPlay
+    ) : RoundResult()
+    data class Error(val message: String) : RoundResult()
+}

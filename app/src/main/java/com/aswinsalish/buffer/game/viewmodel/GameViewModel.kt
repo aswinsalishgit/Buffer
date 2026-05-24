@@ -2,10 +2,10 @@ package com.aswinsalish.buffer.game.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.aswinsalish.buffer.game.logic.BotEngine
 import com.aswinsalish.buffer.game.state.GamePhase
 import com.aswinsalish.buffer.game.state.GameState
 import com.aswinsalish.buffer.game.state.RoundPlay
+import com.aswinsalish.buffer.game.state.RoundResult
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,10 +17,64 @@ class GameViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(GameState())
     val uiState: StateFlow<GameState> = _uiState.asStateFlow()
 
-    private val botEngine = BotEngine()
+    fun processRound(playerRight: Int, playerLeft: Int): RoundResult {
+        val currentState = _uiState.value
+
+        // Validate playerRight against playerBuffer
+        if (currentState.playerBuffer.contains(playerRight)) {
+            return RoundResult.Error("Invalid move: Right hand is on cooldown.")
+        }
+
+        // Generate random botRight and botLeft
+        // ensuring the botRight move is also valid against its own botBuffer.
+        val availableBotHands = (1..5).filter { !currentState.botBuffer.contains(it) }
+        val botRight = availableBotHands.randomOrNull() ?: 1
+        val botLeft = (1..5).random()
+
+        // Calculate the winner of the round
+        val playerWonPoint = playerLeft == botRight
+        val botWonPoint = botLeft == playerRight
+
+        val roundPlay = RoundPlay(
+            playerRightHand = playerRight,
+            playerLeftHandGuess = playerLeft,
+            botRightHand = botRight,
+            botLeftHandGuess = botLeft,
+            playerWonPoint = playerWonPoint,
+            botWonPoint = botWonPoint
+        )
+
+        // Update the buffers for both players (maintaining the 2-round cooldown)
+        val newPlayerBuffer = (currentState.playerBuffer + listOf(playerRight)).takeLast(2)
+        val newBotBuffer = (currentState.botBuffer + listOf(botRight)).takeLast(2)
+
+        // Update scores
+        val newPlayerScore = currentState.playerScore + if (playerWonPoint) 1 else 0
+        val newBotScore = currentState.botScore + if (botWonPoint) 1 else 0
+
+        // Create updated state
+        val updatedState = currentState.copy(
+            playerBuffer = newPlayerBuffer,
+            botBuffer = newBotBuffer,
+            playerScore = newPlayerScore,
+            botScore = newBotScore,
+            currentRoundPlay = roundPlay
+        )
+
+        // Return a RoundResult object containing the outcome and updated state.
+        return RoundResult.Success(updatedState, roundPlay)
+    }
 
     fun executeTurn(playerRightHand: Int, playerLeftHandGuess: Int) {
         if (_uiState.value.gamePhase != GamePhase.AWAITING_INPUT) return
+
+        val result = processRound(playerRightHand, playerLeftHandGuess)
+        if (result is RoundResult.Error) {
+            // Log or expose the error to the UI. For now, simply return.
+            return
+        }
+
+        val successResult = result as RoundResult.Success
 
         _uiState.update { it.copy(gamePhase = GamePhase.EXECUTING) }
 
@@ -28,39 +82,13 @@ class GameViewModel : ViewModel() {
             // Simulate bot thinking
             delay(1000)
 
-            val (botRightHand, botLeftHandGuess) = botEngine.generateMove(_uiState.value.botBuffer)
-
-            val playerWonPoint = playerLeftHandGuess == botRightHand
-            val botWonPoint = botLeftHandGuess == playerRightHand
-
-            val roundPlay = RoundPlay(
-                playerRightHand = playerRightHand,
-                playerLeftHandGuess = playerLeftHandGuess,
-                botRightHand = botRightHand,
-                botLeftHandGuess = botLeftHandGuess,
-                playerWonPoint = playerWonPoint,
-                botWonPoint = botWonPoint
-            )
-
-            // Update scores
-            val newPlayerScore = _uiState.value.playerScore + if (playerWonPoint) 1 else 0
-            val newBotScore = _uiState.value.botScore + if (botWonPoint) 1 else 0
-
-            // Update buffers
-            val newPlayerBuffer = (_uiState.value.playerBuffer + listOf(playerRightHand)).takeLast(2)
-            val newBotBuffer = (_uiState.value.botBuffer + listOf(botRightHand)).takeLast(2)
-
-            _uiState.update {
-                it.copy(
-                    playerBuffer = newPlayerBuffer,
-                    botBuffer = newBotBuffer,
-                    playerScore = newPlayerScore,
-                    botScore = newBotScore,
-                    currentRoundPlay = roundPlay
-                )
-            }
+            // Apply the processed updated state to the UI Flow
+            _uiState.value = successResult.updatedState
 
             delay(1000) // Time to show the round results
+
+            val newPlayerScore = _uiState.value.playerScore
+            val newBotScore = _uiState.value.botScore
 
             if (newPlayerScore >= 3 || newBotScore >= 3) {
                 val winner = if (newPlayerScore >= 3 && newBotScore >= 3) "Tie" 
