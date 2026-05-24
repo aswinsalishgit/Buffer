@@ -12,7 +12,8 @@ data class GameState(
     val matchHistory: List<RoundPlay> = emptyList(),
     val playerStateHistory: List<Int> = emptyList(),
     val playerReadHistory: List<Int> = emptyList(),
-    val botDifficulty: BotDifficulty = BotDifficulty.MEDIUM
+    val botDifficulty: BotDifficulty = BotDifficulty.MEDIUM,
+    val currentBotMessage: String? = null
 )
 
 enum class BotDifficulty {
