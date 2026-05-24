@@ -97,12 +97,14 @@ fun BlockyTextField(
     value: String,
     onValueChange: (String) -> Unit,
     label: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    leadingIcon: @Composable (() -> Unit)? = null
 ) {
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
         label = { Text(label) },
+        leadingIcon = leadingIcon,
         modifier = modifier.fillMaxWidth(),
         shape = RectangleShape,
         colors = OutlinedTextFieldDefaults.colors(
