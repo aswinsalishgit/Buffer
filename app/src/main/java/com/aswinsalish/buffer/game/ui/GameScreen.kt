@@ -3,8 +3,11 @@ package com.aswinsalish.buffer.game.ui
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -14,18 +17,26 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.aswinsalish.buffer.core.components.BlockyButton
+import com.aswinsalish.buffer.core.components.BlockyTextField
 import com.aswinsalish.buffer.core.components.LoadoutSquareButton
 import com.aswinsalish.buffer.core.components.StackHeader
+import com.aswinsalish.buffer.core.data.UserPreferencesViewModel
 import com.aswinsalish.buffer.core.theme.AccentColor
 import com.aswinsalish.buffer.game.state.TurnPhase
 import com.aswinsalish.buffer.game.viewmodel.GameViewModel
 
 @Composable
-fun GameScreen(viewModel: GameViewModel = viewModel()) {
-    val uiState by viewModel.uiState.collectAsState()
-
+fun GameScreen(
+    gameViewModel: GameViewModel = viewModel(),
+    prefsViewModel: UserPreferencesViewModel = viewModel()
+) {
+    val uiState by gameViewModel.uiState.collectAsState()
+    
     var selectedRightHand by remember { mutableStateOf<Int?>(null) }
     var selectedLeftHand by remember { mutableStateOf<Int?>(null) }
+
+    var showHelpDialog by remember { mutableStateOf(false) }
+    var showSettingsDialog by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -40,7 +51,7 @@ fun GameScreen(viewModel: GameViewModel = viewModel()) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = { /* TODO: Help */ }) {
+            IconButton(onClick = { showHelpDialog = true }) {
                 Icon(Icons.Default.Info, contentDescription = "Help", tint = AccentColor)
             }
             Text(
@@ -48,7 +59,7 @@ fun GameScreen(viewModel: GameViewModel = viewModel()) {
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )
-            IconButton(onClick = { /* TODO: Settings */ }) {
+            IconButton(onClick = { showSettingsDialog = true }) {
                 Icon(Icons.Default.Settings, contentDescription = "Settings", tint = AccentColor)
             }
         }
@@ -145,7 +156,7 @@ fun GameScreen(viewModel: GameViewModel = viewModel()) {
                                     onClick = {
                                         selectedRightHand = null
                                         selectedLeftHand = null
-                                        viewModel.startNextRound()
+                                        gameViewModel.startNextRound()
                                     },
                                     modifier = Modifier.fillMaxWidth().height(56.dp)
                                 )
@@ -173,13 +184,25 @@ fun GameScreen(viewModel: GameViewModel = viewModel()) {
                                 onClick = {
                                     selectedRightHand = null
                                     selectedLeftHand = null
-                                    viewModel.resetGame()
+                                    gameViewModel.resetGame()
                                 },
                                 modifier = Modifier.fillMaxWidth().height(56.dp)
                             )
                         }
                     }
                 }
+            }
+
+            // Auxiliary Popups
+            if (showHelpDialog) {
+                HelpDialog(onDismiss = { showHelpDialog = false })
+            }
+
+            if (showSettingsDialog) {
+                SettingsDialog(
+                    viewModel = prefsViewModel,
+                    onDismiss = { showSettingsDialog = false }
+                )
             }
         }
 
@@ -193,7 +216,7 @@ fun GameScreen(viewModel: GameViewModel = viewModel()) {
                     text = "EXECUTE",
                     onClick = {
                         if (selectedRightHand != null && selectedLeftHand != null) {
-                            viewModel.executeTurn(selectedRightHand!!, selectedLeftHand!!)
+                            gameViewModel.executeTurn(selectedRightHand!!, selectedLeftHand!!)
                         }
                     },
                     enabled = selectedRightHand != null && selectedLeftHand != null,
@@ -201,6 +224,141 @@ fun GameScreen(viewModel: GameViewModel = viewModel()) {
                 )
             } else {
                 Spacer(modifier = Modifier.height(64.dp))
+            }
+        }
+    }
+}
+
+@Composable
+fun HelpDialog(onDismiss: () -> Unit) {
+    androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
+        Card(
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background),
+            border = BorderStroke(2.dp, Color.LightGray),
+            modifier = Modifier.fillMaxWidth().fillMaxHeight(0.8f)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(24.dp)
+            ) {
+                Text(
+                    text = "DATABASE ARCHIVE",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = AccentColor,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    StackHeader("SECTION 1: HOW TO PLAY")
+                    Text(
+                        text = "Buffer is a 1v1 psychological combat simulation. Each round, you must simultaneously lock in a MOVE (Right Hand) and a READ (Left Hand) by selecting numbers from 1 to 5. Your MOVE dictates your attack posture, while your READ is an attempt to predict the opponent's MOVE.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    StackHeader("SECTION 2: GAME RULES")
+                    Text(
+                        text = "If your READ matches the opponent's MOVE exactly, you score a point. If both players successfully read each other, it's a DRAW and both players score a point. If neither reads the opponent correctly, the round ends with NO POINTS. The first player to reach 5 points wins the match.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    StackHeader("SECTION 3: MASTERY & THE BUFFER")
+                    Text(
+                        text = "The core of the simulation relies on THE BUFFER. When you execute a MOVE (Right Hand), that number is locked into your physical buffer and goes on cooldown for the next 2 rounds. You cannot select that number as a MOVE again until it cycles out of the buffer. The bot tracks your buffer and analyzes your historical patterns to optimize its defensive evasion and offensive predictions. Master the cooldown cycle to manipulate the bot's logic and break its defenses.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+                BlockyButton(
+                    text = "CLOSE ARCHIVE",
+                    onClick = onDismiss,
+                    modifier = Modifier.fillMaxWidth().height(56.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun SettingsDialog(viewModel: UserPreferencesViewModel, onDismiss: () -> Unit) {
+    val prefsState by viewModel.preferencesState.collectAsState()
+    val initialUsername = (prefsState as? com.aswinsalish.buffer.core.data.PreferencesState.Loaded)?.prefs?.username ?: ""
+    var editUsername by remember { mutableStateOf(initialUsername) }
+
+    androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
+        Card(
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background),
+            border = BorderStroke(2.dp, Color.LightGray),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "SYSTEM SETTINGS",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = AccentColor
+                )
+                Spacer(modifier = Modifier.height(32.dp))
+
+                BlockyTextField(
+                    value = editUsername,
+                    onValueChange = { editUsername = it },
+                    label = "Edit Callsign",
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = "User Icon",
+                            tint = AccentColor
+                        )
+                    }
+                )
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                BlockyButton(
+                    text = "SAVE CHANGES",
+                    onClick = {
+                        if (editUsername.isNotBlank()) {
+                            viewModel.completeOnboarding(editUsername)
+                            onDismiss()
+                        }
+                    },
+                    enabled = editUsername.isNotBlank() && editUsername != initialUsername,
+                    modifier = Modifier.fillMaxWidth().height(56.dp)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                BlockyButton(
+                    text = "TERMS OF SERVICE",
+                    onClick = { /* TODO: Open TOS Dialog */ },
+                    isActive = false,
+                    modifier = Modifier.fillMaxWidth().height(56.dp)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                BlockyButton(
+                    text = "CLOSE",
+                    onClick = onDismiss,
+                    modifier = Modifier.fillMaxWidth().height(56.dp)
+                )
             }
         }
     }
