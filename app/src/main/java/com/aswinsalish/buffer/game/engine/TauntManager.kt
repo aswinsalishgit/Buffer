@@ -13,7 +13,7 @@ object TauntManager {
     )
 
     val botWinsRoundTaunts = listOf(
-        "You clumped your buffer. 1 and 5? Really? I could read you with my monitor turned off.",
+        "You clumped your buffer. {R} and {L}? Really? I could read you with my monitor turned off.",
         "Mathematically predictable. Humans always pick the middle when panicked.",
         "I didn't even need to use probability for that one. You just have terrible habits.",
         "Another data point proving silicon is superior to carbon.",
@@ -70,6 +70,8 @@ object TauntManager {
             result is RoundResult.Success -> {
                 if (result.roundPlay.botWonPoint && !result.roundPlay.playerWonPoint) {
                     pickUniqueTaunt(botWinsRoundTaunts)
+                        .replace("{R}", result.roundPlay.playerRightHand.toString())
+                        .replace("{L}", result.roundPlay.playerLeftHandGuess.toString())
                 } else if (result.roundPlay.playerWonPoint && !result.roundPlay.botWonPoint) {
                     pickUniqueTaunt(playerWinsRoundTaunts)
                 } else {

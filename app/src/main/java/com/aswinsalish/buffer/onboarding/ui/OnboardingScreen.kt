@@ -3,6 +3,7 @@ package com.aswinsalish.buffer.onboarding.ui
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
@@ -21,6 +22,7 @@ import com.aswinsalish.buffer.core.components.BlockyTextField
 import com.aswinsalish.buffer.core.data.UserPreferencesViewModel
 import com.aswinsalish.buffer.core.theme.AccentColor
 import com.aswinsalish.buffer.core.theme.BackgroundColor
+import com.aswinsalish.buffer.core.components.TermsAndPrivacyDialog
 
 @Composable
 fun OnboardingScreen(
@@ -29,6 +31,11 @@ fun OnboardingScreen(
 ) {
     var username by remember { mutableStateOf("") }
     var termsAccepted by remember { mutableStateOf(false) }
+    var showTerms by remember { mutableStateOf(false) }
+
+    if (showTerms) {
+        TermsAndPrivacyDialog(onDismiss = { showTerms = false })
+    }
 
     Column(
         modifier = Modifier
@@ -67,6 +74,13 @@ fun OnboardingScreen(
         Spacer(modifier = Modifier.height(32.dp))
 
         // Options
+        Text(
+            text = "VIEW TERMS & POLICY",
+            style = MaterialTheme.typography.labelSmall,
+            color = AccentColor,
+            modifier = Modifier.clickable { showTerms = true }.padding(vertical = 8.dp)
+        )
+        
         TacticalButton(
             text = if (termsAccepted) "TERMS ACCEPTED" else "ACCEPT TERMS & POLICY",
             onClick = { termsAccepted = !termsAccepted },

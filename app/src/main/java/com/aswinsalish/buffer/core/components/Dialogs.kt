@@ -91,6 +91,11 @@ fun SettingsDialog(viewModel: UserPreferencesViewModel, onDismiss: () -> Unit) {
     val musicEnabled = (prefsState as? com.aswinsalish.buffer.core.data.PreferencesState.Loaded)?.prefs?.musicEnabled ?: true
     val musicVolume = (prefsState as? com.aswinsalish.buffer.core.data.PreferencesState.Loaded)?.prefs?.musicVolume ?: 0.5f
     var editUsername by remember { mutableStateOf(initialUsername) }
+    var showTerms by remember { mutableStateOf(false) }
+
+    if (showTerms) {
+        TermsAndPrivacyDialog(onDismiss = { showTerms = false })
+    }
 
     androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
         Card(
@@ -201,12 +206,12 @@ fun SettingsDialog(viewModel: UserPreferencesViewModel, onDismiss: () -> Unit) {
                 TacticalButton(
                     text = "SAVE CHANGES",
                     onClick = {
-                        if (editUsername.isNotBlank()) {
+                        if (editUsername.isNotBlank() && editUsername != initialUsername) {
                             viewModel.completeOnboarding(editUsername)
-                            onDismiss()
                         }
+                        onDismiss()
                     },
-                    isDisabled = !(editUsername.isNotBlank() && editUsername != initialUsername),
+                    isDisabled = editUsername.isBlank(),
                     modifier = Modifier.fillMaxWidth().height(56.dp)
                 )
 
@@ -214,13 +219,47 @@ fun SettingsDialog(viewModel: UserPreferencesViewModel, onDismiss: () -> Unit) {
 
                 TacticalButton(
                     text = "TERMS OF SERVICE",
-                    onClick = { /* TODO: Open TOS Dialog */ },
-                    isDisabled = true,
+                    onClick = { showTerms = true },
+                    isDisabled = false,
                     modifier = Modifier.fillMaxWidth().height(56.dp)
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
+                TacticalButton(
+                    text = "CLOSE",
+                    onClick = onDismiss,
+                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                    clickSound = SoundType.SWIPE
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun TermsAndPrivacyDialog(onDismiss: () -> Unit) {
+    androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
+        Card(
+            colors = CardDefaults.cardColors(containerColor = BackgroundColor),
+            border = BorderStroke(2.dp, Color.LightGray),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp)
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                StackHeader("TERMS & PRIVACY")
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "TERMS AND CONDITIONS\n\nBy using Buffer, you agree to these terms. This game is provided 'as-is' without any warranties. You are responsible for your own data.\n\nPRIVACY POLICY\n\nWe do not collect any personal data. All your game data and preferences are stored locally on your device using Jetpack DataStore. We do not transmit your data to any external servers.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.LightGray
+                )
+                Spacer(modifier = Modifier.height(32.dp))
                 TacticalButton(
                     text = "CLOSE",
                     onClick = onDismiss,
