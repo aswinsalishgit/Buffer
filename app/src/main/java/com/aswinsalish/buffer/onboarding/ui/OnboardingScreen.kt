@@ -1,6 +1,7 @@
 package com.aswinsalish.buffer.onboarding.ui
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
@@ -19,6 +20,7 @@ import com.aswinsalish.buffer.core.components.BlockyButton
 import com.aswinsalish.buffer.core.components.BlockyTextField
 import com.aswinsalish.buffer.core.data.UserPreferencesViewModel
 import com.aswinsalish.buffer.core.theme.AccentColor
+import com.aswinsalish.buffer.core.theme.BackgroundColor
 
 @Composable
 fun OnboardingScreen(
@@ -31,6 +33,7 @@ fun OnboardingScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(BackgroundColor)
             .padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center

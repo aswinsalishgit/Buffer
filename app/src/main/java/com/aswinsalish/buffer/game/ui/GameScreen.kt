@@ -2,6 +2,7 @@ package com.aswinsalish.buffer.game.ui
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -22,6 +23,7 @@ import com.aswinsalish.buffer.core.components.LoadoutSquareButton
 import com.aswinsalish.buffer.core.components.StackHeader
 import com.aswinsalish.buffer.core.data.UserPreferencesViewModel
 import com.aswinsalish.buffer.core.theme.AccentColor
+import com.aswinsalish.buffer.core.theme.BackgroundColor
 import com.aswinsalish.buffer.game.state.TurnPhase
 import com.aswinsalish.buffer.game.viewmodel.GameViewModel
 
@@ -41,6 +43,7 @@ fun GameScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(BackgroundColor)
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween
@@ -112,7 +115,7 @@ fun GameScreen(
                 if (play != null) {
                     androidx.compose.ui.window.Dialog(onDismissRequest = { }) {
                         Card(
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background),
+                            colors = CardDefaults.cardColors(containerColor = BackgroundColor),
                             border = BorderStroke(2.dp, Color.LightGray),
                             modifier = Modifier.fillMaxWidth()
                         ) {
@@ -167,7 +170,7 @@ fun GameScreen(
             } else if (uiState.currentPhase == TurnPhase.GAME_OVER) {
                 androidx.compose.ui.window.Dialog(onDismissRequest = { }) {
                     Card(
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background),
+                        colors = CardDefaults.cardColors(containerColor = BackgroundColor),
                         border = BorderStroke(2.dp, AccentColor),
                         modifier = Modifier.fillMaxWidth()
                     ) {
@@ -233,7 +236,7 @@ fun GameScreen(
 fun HelpDialog(onDismiss: () -> Unit) {
     androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
         Card(
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background),
+            colors = CardDefaults.cardColors(containerColor = BackgroundColor),
             border = BorderStroke(2.dp, Color.LightGray),
             modifier = Modifier.fillMaxWidth().fillMaxHeight(0.8f)
         ) {
@@ -299,7 +302,7 @@ fun SettingsDialog(viewModel: UserPreferencesViewModel, onDismiss: () -> Unit) {
 
     androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
         Card(
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background),
+            colors = CardDefaults.cardColors(containerColor = BackgroundColor),
             border = BorderStroke(2.dp, Color.LightGray),
             modifier = Modifier.fillMaxWidth()
         ) {
