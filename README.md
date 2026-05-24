@@ -1,10 +1,10 @@
-# 🧠 BUFFER // Tactical State-Machine 
+# BUFFER // Tactical State-Machine 
 
 > *"A 1v1 psychological deduction game disguised as a mobile app."*
 
-![Kotlin](https://img.shields.io/badge/Kotlin-B125EA?style=for-the-badge&logo=kotlin&logoColor=white)
-![Jetpack Compose](https://img.shields.io/badge/Jetpack_Compose-4285F4?style=for-the-badge&logo=android&logoColor=white)
-![Architecture](https://img.shields.io/badge/Architecture-MVVM-F58A27?style=for-the-badge)
+[![Kotlin](https://img.shields.io/badge/Kotlin-B125EA?style=for-the-badge&logo=kotlin&logoColor=white)](https://kotlinlang.org/docs/home.html)
+[![Jetpack Compose](https://img.shields.io/badge/Jetpack_Compose-4285F4?style=for-the-badge&logo=android&logoColor=white)](https://developer.android.com/jetpack/compose)
+[![Architecture](https://img.shields.io/badge/Architecture-MVVM-F58A27?style=for-the-badge)](https://developer.android.com/topic/architecture)
 
 **Buffer** is a high-speed, simultaneous-reveal logic game built natively for Android. It takes the core concept of Rock-Paper-Scissors and completely shatters it by introducing a **2-Round Memory Cooldown** and a **Heuristic AI Taunt Engine**. 
 
@@ -53,14 +53,12 @@ The application is built entirely in **Jetpack Compose** using modern Android de
 
 ---
 
-## Installation
+##  Installation
 
 Buffer is a fully standalone, offline application requiring **zero system permissions**. 
-
-1. Navigate to the [Releases](#) tab of this repository.
-2. Download the latest `buffer-release.apk`.
+uffer-release.apk`.
 3. Open the file on your Android device (ensure "Install from Unknown Sources" is enabled).
-4. *Note: This APK is cryptographically signed with a verified developer keystore and has been cleared by Google Play Protect.*
+4. *Note on Installation: Because this app is distributed directly via GitHub and not the Google Play Store, Android's Play Protect will likely flag it as an "Unrecognized Developer." This is a standard OS-level security prompt for sideloaded applications. You can safely bypass this by clicking "More Details" -> "Install Anyway."*
 
 ---
 
