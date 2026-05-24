@@ -94,6 +94,44 @@ fun GameScreen(
             }
         }
 
+        // Taunt Engine Display
+        var displayedMessage by remember { mutableStateOf<String?>(null) }
+        LaunchedEffect(uiState.currentBotMessage) {
+            if (uiState.currentBotMessage != null) {
+                displayedMessage = uiState.currentBotMessage
+                kotlinx.coroutines.delay(10000)
+                displayedMessage = null
+            }
+        }
+
+        if (displayedMessage != null) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
+            ) {
+                androidx.compose.foundation.Image(
+                    painter = androidx.compose.ui.res.painterResource(id = com.aswinsalish.buffer.R.drawable.bot),
+                    contentDescription = "Bot Avatar",
+                    modifier = Modifier.size(64.dp)
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+                Surface(
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp, 16.dp, 16.dp, 0.dp),
+                    color = Color.DarkGray,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        text = displayedMessage!!,
+                        modifier = Modifier.padding(12.dp),
+                        color = Color.White,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+        } else {
+            Spacer(modifier = Modifier.height(80.dp)) // Maintain layout stability
+        }
+
         // Center Area (Grid remains persistent in background)
         Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
             Column(
