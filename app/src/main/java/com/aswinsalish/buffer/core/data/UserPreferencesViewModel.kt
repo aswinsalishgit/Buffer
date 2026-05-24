@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import com.aswinsalish.buffer.game.state.BotDifficulty
 
 sealed class PreferencesState {
     object Loading : PreferencesState()
@@ -29,6 +30,12 @@ class UserPreferencesViewModel(application: Application) : AndroidViewModel(appl
         viewModelScope.launch {
             repository.saveUsername(username)
             repository.saveTermsAccepted(true)
+        }
+    }
+
+    fun saveDefaultDifficulty(difficulty: BotDifficulty) {
+        viewModelScope.launch {
+            repository.saveDefaultDifficulty(difficulty)
         }
     }
 }

@@ -5,6 +5,7 @@ import com.aswinsalish.buffer.game.state.TurnPhase
 import com.aswinsalish.buffer.game.state.GameState
 import com.aswinsalish.buffer.game.state.RoundPlay
 import com.aswinsalish.buffer.game.state.RoundResult
+import com.aswinsalish.buffer.game.state.BotDifficulty
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -56,6 +57,10 @@ class GameViewModel : ViewModel() {
 
         // Update match history
         val newMatchHistory = currentState.matchHistory + roundPlay
+        
+        // Track the player's every single move and read
+        val newPlayerStateHistory = currentState.playerStateHistory + playerRight
+        val newPlayerReadHistory = currentState.playerReadHistory + playerLeft
 
         // Update scores
         val newPlayerScore = currentState.playerScore + if (playerWonPoint) 1 else 0
@@ -68,7 +73,9 @@ class GameViewModel : ViewModel() {
             playerScore = newPlayerScore,
             botScore = newBotScore,
             currentRoundPlay = roundPlay,
-            matchHistory = newMatchHistory
+            matchHistory = newMatchHistory,
+            playerStateHistory = newPlayerStateHistory,
+            playerReadHistory = newPlayerReadHistory
         )
 
         // Return a RoundResult object containing the outcome and updated state.
@@ -109,7 +116,7 @@ class GameViewModel : ViewModel() {
         }
     }
 
-    fun resetGame() {
-        _uiState.value = GameState()
+    fun resetGame(selectedDifficulty: BotDifficulty = BotDifficulty.MEDIUM) {
+        _uiState.value = GameState(botDifficulty = selectedDifficulty)
     }
 }

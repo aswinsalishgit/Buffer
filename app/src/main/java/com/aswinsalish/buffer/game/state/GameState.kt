@@ -9,8 +9,15 @@ data class GameState(
     val currentPhase: TurnPhase = TurnPhase.SELECTING,
     val currentRoundPlay: RoundPlay? = null,
     val matchWinner: String? = null,
-    val matchHistory: List<RoundPlay> = emptyList()
+    val matchHistory: List<RoundPlay> = emptyList(),
+    val playerStateHistory: List<Int> = emptyList(),
+    val playerReadHistory: List<Int> = emptyList(),
+    val botDifficulty: BotDifficulty = BotDifficulty.MEDIUM
 )
+
+enum class BotDifficulty {
+    EASY, MEDIUM, HARD
+}
 
 enum class TurnPhase {
     SELECTING,
