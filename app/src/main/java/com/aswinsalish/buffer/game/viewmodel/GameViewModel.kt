@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlin.random.Random
+import com.aswinsalish.buffer.game.engine.TauntManager
 
 class GameViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(GameState())
@@ -24,7 +25,9 @@ class GameViewModel : ViewModel() {
             return RoundResult.Error("Invalid move: Right hand is on cooldown.")
         }
 
-        val (botRight, botLeft) = calculateBotMoves(currentState, currentState.botDifficulty)
+        val (botRight, botLeft, isBluff) = calculateBotMoves(currentState, currentState.botDifficulty)
+        
+        val isBlunder = currentState.botBuffer.contains(playerLeft)
 
         // Calculate the winner of the round
         val playerWonPoint = playerLeft == botRight
@@ -66,8 +69,12 @@ class GameViewModel : ViewModel() {
             playerReadHistory = newPlayerReadHistory
         )
 
+        val successResult = RoundResult.Success(updatedState, roundPlay)
+        val taunt = TauntManager.generateTaunt(successResult, isBlunder, isBluff)
+        val finalState = updatedState.copy(currentBotMessage = taunt)
+
         // Return a RoundResult object containing the outcome and updated state.
-        return RoundResult.Success(updatedState, roundPlay)
+        return RoundResult.Success(finalState, roundPlay)
     }
 
     fun executeTurn(playerRightHand: Int, playerLeftHandGuess: Int) {
@@ -105,15 +112,19 @@ class GameViewModel : ViewModel() {
     }
 
     fun resetGame(selectedDifficulty: BotDifficulty = BotDifficulty.MEDIUM) {
-        _uiState.value = GameState(botDifficulty = selectedDifficulty)
+        _uiState.value = GameState(
+            botDifficulty = selectedDifficulty,
+            currentBotMessage = TauntManager.matchStartTaunts.random()
+        )
     }
 
-    private fun calculateBotMoves(currentState: GameState, difficulty: BotDifficulty): Pair<Int, Int> {
+    private fun calculateBotMoves(currentState: GameState, difficulty: BotDifficulty): Triple<Int, Int, Boolean> {
         val validBotRights = (1..5).filter { !currentState.botBuffer.contains(it) }
         val playerAvailableMoves = (1..5).filter { !currentState.playerBuffer.contains(it) }
 
         var botLeft: Int
         var botRight: Int
+        var isBluff = false
 
         when (difficulty) {
             BotDifficulty.EASY -> {
@@ -159,6 +170,7 @@ class GameViewModel : ViewModel() {
                 
                 // The Bluff Override: 20% chance to invert logic
                 if (Random.nextFloat() < 0.2f) {
+                    isBluff = true
                     val maxReadFreq = availableReadFrequencies.values.maxOrNull()
                     val mostGuessedMoves = availableReadFrequencies.filter { it.value == maxReadFreq }.keys.toList()
                     botRight = mostGuessedMoves.randomOrNull() ?: validBotRights.randomOrNull() ?: 1
@@ -168,6 +180,6 @@ class GameViewModel : ViewModel() {
             }
         }
         
-        return Pair(botRight, botLeft)
+        return Triple(botRight, botLeft, isBluff)
     }
 }
