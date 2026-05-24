@@ -25,11 +25,20 @@ class GameViewModel : ViewModel() {
             return RoundResult.Error("Invalid move: Right hand is on cooldown.")
         }
 
-        // Generate random botRight and botLeft
-        // ensuring the botRight move is also valid against its own botBuffer.
-        val availableBotHands = (1..5).filter { !currentState.botBuffer.contains(it) }
-        val botRight = availableBotHands.randomOrNull() ?: 1
-        val botLeft = (1..5).random()
+        // Bot Right Hand (Defensive)
+        val validBotRights = (1..5).filter { !currentState.botBuffer.contains(it) }
+        
+        // Track the player's last 3 moves and avoid numbers the player has guessed correctly before
+        val recentHistory = currentState.matchHistory.takeLast(3)
+        val playerSuccessfulGuesses = recentHistory.filter { it.playerWonPoint }.map { it.playerLeftHandGuess }.toSet()
+        val safeBotRights = validBotRights.filter { it !in playerSuccessfulGuesses }
+        
+        val botRight = if (safeBotRights.isNotEmpty()) safeBotRights.random() else validBotRights.randomOrNull() ?: 1
+
+        // Bot Left Hand (Offensive)
+        // Analyze playerBuffer to see which numbers are locked. Prioritize guessing available numbers.
+        val availablePlayerHands = (1..5).filter { !currentState.playerBuffer.contains(it) }
+        val botLeft = if (availablePlayerHands.isNotEmpty()) availablePlayerHands.random() else (1..5).random()
 
         // Calculate the winner of the round
         val playerWonPoint = playerLeft == botRight
@@ -48,6 +57,9 @@ class GameViewModel : ViewModel() {
         val newPlayerBuffer = (currentState.playerBuffer + listOf(playerRight)).takeLast(2)
         val newBotBuffer = (currentState.botBuffer + listOf(botRight)).takeLast(2)
 
+        // Update match history
+        val newMatchHistory = currentState.matchHistory + roundPlay
+
         // Update scores
         val newPlayerScore = currentState.playerScore + if (playerWonPoint) 1 else 0
         val newBotScore = currentState.botScore + if (botWonPoint) 1 else 0
@@ -58,7 +70,8 @@ class GameViewModel : ViewModel() {
             botBuffer = newBotBuffer,
             playerScore = newPlayerScore,
             botScore = newBotScore,
-            currentRoundPlay = roundPlay
+            currentRoundPlay = roundPlay,
+            matchHistory = newMatchHistory
         )
 
         // Return a RoundResult object containing the outcome and updated state.

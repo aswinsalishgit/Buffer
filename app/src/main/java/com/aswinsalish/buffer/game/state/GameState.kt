@@ -8,7 +8,8 @@ data class GameState(
     val roundCount: Int = 1,
     val gamePhase: GamePhase = GamePhase.AWAITING_INPUT,
     val currentRoundPlay: RoundPlay? = null,
-    val matchWinner: String? = null
+    val matchWinner: String? = null,
+    val matchHistory: List<RoundPlay> = emptyList()
 )
 
 enum class GamePhase {
