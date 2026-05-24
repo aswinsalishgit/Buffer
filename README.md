@@ -58,7 +58,7 @@ The application is built entirely in **Jetpack Compose** using modern Android de
 Buffer is a fully standalone, offline application requiring **zero system permissions**. 
 
 1. Navigate to the [Releases](../../releases/latest) tab of this repository.
-2. Download the latest `buffer-release.apk`.
+2. Download the latest `Buffer.apk`.
 3. Open the file on your Android device (ensure "Install from Unknown Sources" is enabled).
 4. Note on Installation: Because this app is distributed directly via GitHub and not the Google Play Store, Android's Play Protect will likely flag it as an "Unrecognized Developer." This is a standard OS-level security prompt for sideloaded applications. You can safely bypass this by clicking "More Details" -> "Install Anyway."*
 
