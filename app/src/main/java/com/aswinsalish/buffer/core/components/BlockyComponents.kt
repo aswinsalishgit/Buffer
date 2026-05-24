@@ -5,6 +5,8 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -113,5 +115,53 @@ fun BlockyTextField(
             focusedContainerColor = MaterialTheme.colorScheme.background,
             unfocusedContainerColor = MaterialTheme.colorScheme.background
         )
+    )
+}
+
+@Composable
+fun LoadoutSquareButton(
+    number: Int,
+    isSelected: Boolean,
+    isOnCooldown: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val borderColor = when {
+        isSelected -> AccentColor
+        isOnCooldown -> Color.DarkGray
+        else -> Color.Gray
+    }
+
+    val borderWidth = if (isSelected) 4.dp else 1.dp
+
+    val glowModifier = if (isSelected) {
+        modifier.glow(color = AccentColor, blurRadius = 8.dp)
+    } else modifier
+
+    Button(
+        onClick = onClick,
+        modifier = glowModifier.size(56.dp),
+        enabled = !isOnCooldown,
+        shape = RectangleShape,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = if (isOnCooldown) Color.DarkGray.copy(alpha = 0.5f) else MaterialTheme.colorScheme.surfaceVariant,
+            contentColor = if (isOnCooldown) Color.Gray else MaterialTheme.colorScheme.onSurface,
+            disabledContainerColor = Color.DarkGray.copy(alpha = 0.3f),
+            disabledContentColor = Color.Gray.copy(alpha = 0.5f)
+        ),
+        border = BorderStroke(borderWidth, borderColor),
+        contentPadding = PaddingValues(0.dp)
+    ) {
+        Text(number.toString(), style = MaterialTheme.typography.titleLarge)
+    }
+}
+
+@Composable
+fun StackHeader(text: String, modifier: Modifier = Modifier) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.titleMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = modifier.padding(vertical = 8.dp)
     )
 }
