@@ -25,9 +25,12 @@ import com.aswinsalish.buffer.core.theme.BackgroundColor
 
 @Composable
 fun MainMenuScreen(
-    onPlayClick: () -> Unit,
+    onPlayClick: (com.aswinsalish.buffer.game.state.BotDifficulty) -> Unit,
     prefsViewModel: UserPreferencesViewModel = viewModel()
 ) {
+    val prefsState by prefsViewModel.preferencesState.collectAsState()
+    val defaultDifficulty = (prefsState as? com.aswinsalish.buffer.core.data.PreferencesState.Loaded)?.prefs?.defaultDifficulty ?: com.aswinsalish.buffer.game.state.BotDifficulty.MEDIUM
+    var selectedDifficulty by remember(defaultDifficulty) { mutableStateOf(defaultDifficulty) }
     var showHelpDialog by remember { mutableStateOf(false) }
     var showSettingsDialog by remember { mutableStateOf(false) }
 
@@ -67,9 +70,15 @@ fun MainMenuScreen(
                 
                 Spacer(modifier = Modifier.height(64.dp))
                 
+                com.aswinsalish.buffer.core.components.DifficultySelector(
+                    selectedDifficulty = selectedDifficulty,
+                    onDifficultySelected = { selectedDifficulty = it },
+                    modifier = Modifier.padding(horizontal = 32.dp).padding(bottom = 32.dp)
+                )
+
                 TacticalButton(
                     text = "PLAY",
-                    onClick = onPlayClick,
+                    onClick = { onPlayClick(selectedDifficulty) },
                     modifier = Modifier
                         .fillMaxWidth(0.6f)
                         .height(64.dp)

@@ -30,10 +30,15 @@ import com.aswinsalish.buffer.game.viewmodel.GameViewModel
 
 @Composable
 fun GameScreen(
+    difficulty: com.aswinsalish.buffer.game.state.BotDifficulty,
     onExitPlay: () -> Unit,
     gameViewModel: GameViewModel = viewModel(),
     prefsViewModel: UserPreferencesViewModel = viewModel()
 ) {
+    LaunchedEffect(Unit) {
+        gameViewModel.resetGame(difficulty)
+    }
+    
     val uiState by gameViewModel.uiState.collectAsState()
     
     var selectedRightHand by remember { mutableStateOf<Int?>(null) }
@@ -56,13 +61,34 @@ fun GameScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Spacer(modifier = Modifier.width(48.dp)) // To keep text centered
-            Text(
-                text = "ROUND ${uiState.roundCount} | YOUR SCORE ${uiState.playerScore} | BOT SCORE ${uiState.botScore}",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                textAlign = TextAlign.Center,
+            
+            val prefsState by prefsViewModel.preferencesState.collectAsState()
+            val username = (prefsState as? com.aswinsalish.buffer.core.data.PreferencesState.Loaded)?.prefs?.username ?: "YOU"
+
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.weight(1f)
-            )
+            ) {
+                Text(
+                    text = "ROUND ${uiState.roundCount}",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                )
+                
+                Text(
+                    text = "${username.uppercase()} ${uiState.playerScore} | BOT ${uiState.botScore}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.LightGray
+                )
+                
+                Text(
+                    text = "[ VS AI: ${difficulty.name} ]",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.LightGray,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
             IconButton(onClick = { showPauseDialog = true }) {
                 Icon(Icons.Default.Menu, contentDescription = "Pause", tint = AccentColor)
             }

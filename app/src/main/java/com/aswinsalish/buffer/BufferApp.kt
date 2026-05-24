@@ -40,13 +40,19 @@ fun BufferApp() {
             }
             composable("main_menu") {
                 MainMenuScreen(
-                    onPlayClick = {
-                        navController.navigate("game")
+                    onPlayClick = { difficulty ->
+                        navController.navigate("game/${difficulty.name}")
                     }
                 )
             }
-            composable("game") {
+            composable("game/{difficulty}") { backStackEntry ->
+                val difficultyStr = backStackEntry.arguments?.getString("difficulty")
+                val difficulty = try {
+                    if (difficultyStr != null) com.aswinsalish.buffer.game.state.BotDifficulty.valueOf(difficultyStr) else com.aswinsalish.buffer.game.state.BotDifficulty.MEDIUM
+                } catch (e: Exception) { com.aswinsalish.buffer.game.state.BotDifficulty.MEDIUM }
+
                 com.aswinsalish.buffer.game.ui.GameScreen(
+                    difficulty = difficulty,
                     onExitPlay = {
                         navController.navigate("main_menu") {
                             popUpTo("main_menu") { inclusive = true }

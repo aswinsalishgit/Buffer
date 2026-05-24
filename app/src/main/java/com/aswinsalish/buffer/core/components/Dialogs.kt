@@ -82,6 +82,7 @@ fun HelpDialog(onDismiss: () -> Unit) {
 fun SettingsDialog(viewModel: UserPreferencesViewModel, onDismiss: () -> Unit) {
     val prefsState by viewModel.preferencesState.collectAsState()
     val initialUsername = (prefsState as? com.aswinsalish.buffer.core.data.PreferencesState.Loaded)?.prefs?.username ?: ""
+    val defaultDifficulty = (prefsState as? com.aswinsalish.buffer.core.data.PreferencesState.Loaded)?.prefs?.defaultDifficulty ?: com.aswinsalish.buffer.game.state.BotDifficulty.MEDIUM
     var editUsername by remember { mutableStateOf(initialUsername) }
 
     androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
@@ -114,6 +115,14 @@ fun SettingsDialog(viewModel: UserPreferencesViewModel, onDismiss: () -> Unit) {
                             tint = AccentColor
                         )
                     }
+                )
+
+                Spacer(modifier = Modifier.height(32.dp))
+                
+                StackHeader("DEFAULT BOT DIFFICULTY")
+                DifficultySelector(
+                    selectedDifficulty = defaultDifficulty,
+                    onDifficultySelected = { viewModel.saveDefaultDifficulty(it) }
                 )
 
                 Spacer(modifier = Modifier.height(32.dp))

@@ -135,3 +135,27 @@ fun StackHeader(text: String, modifier: Modifier = Modifier) {
         modifier = modifier.padding(vertical = 8.dp)
     )
 }
+
+@Composable
+fun DifficultySelector(
+    selectedDifficulty: com.aswinsalish.buffer.game.state.BotDifficulty,
+    onDifficultySelected: (com.aswinsalish.buffer.game.state.BotDifficulty) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    androidx.compose.foundation.layout.Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceEvenly
+    ) {
+        com.aswinsalish.buffer.game.state.BotDifficulty.values().forEach { difficulty ->
+            TacticalButton(
+                text = difficulty.name,
+                onClick = { onDifficultySelected(difficulty) },
+                isActive = selectedDifficulty == difficulty,
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 4.dp),
+                contentPadding = PaddingValues(vertical = 12.dp)
+            )
+        }
+    }
+}
