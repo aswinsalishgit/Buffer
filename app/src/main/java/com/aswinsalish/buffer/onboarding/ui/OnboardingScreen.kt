@@ -31,32 +31,30 @@ fun OnboardingScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 32.dp, vertical = 48.dp),
+            .padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         // Header
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Image(
-                painter = painterResource(id = R.drawable.ic_tactical_b),
-                contentDescription = "Logo",
-                modifier = Modifier.size(80.dp),
-                colorFilter = ColorFilter.tint(AccentColor)
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Text("BUFFER", style = MaterialTheme.typography.headlineLarge, color = AccentColor)
-        }
-
-        Spacer(modifier = Modifier.height(64.dp))
+        Image(
+            painter = painterResource(id = R.drawable.ic_tactical_b),
+            contentDescription = "Buffer Logo",
+            modifier = Modifier.size(80.dp),
+            colorFilter = ColorFilter.tint(AccentColor)
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text("BUFFER", style = MaterialTheme.typography.headlineLarge)
+        
+        Spacer(modifier = Modifier.height(48.dp))
 
         // Input
         BlockyTextField(
             value = username,
             onValueChange = { username = it },
-            label = "USERNAME",
+            label = "Enter Callsign",
             leadingIcon = {
                 Icon(
-                    imageVector = Icons.Filled.Person,
+                    imageVector = Icons.Default.Person,
                     contentDescription = "User Icon",
                     tint = AccentColor
                 )
@@ -67,7 +65,7 @@ fun OnboardingScreen(
 
         // Options
         BlockyButton(
-            text = "ACCEPT TERMS & POLICY",
+            text = if (termsAccepted) "TERMS ACCEPTED" else "ACCEPT TERMS & POLICY",
             onClick = { termsAccepted = !termsAccepted },
             isActive = termsAccepted,
             modifier = Modifier.fillMaxWidth().height(56.dp)
