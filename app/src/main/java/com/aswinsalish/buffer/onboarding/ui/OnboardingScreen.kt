@@ -16,7 +16,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.aswinsalish.buffer.R
-import com.aswinsalish.buffer.core.components.BlockyButton
+import com.aswinsalish.buffer.core.components.TacticalButton
 import com.aswinsalish.buffer.core.components.BlockyTextField
 import com.aswinsalish.buffer.core.data.UserPreferencesViewModel
 import com.aswinsalish.buffer.core.theme.AccentColor
@@ -67,7 +67,7 @@ fun OnboardingScreen(
         Spacer(modifier = Modifier.height(32.dp))
 
         // Options
-        BlockyButton(
+        TacticalButton(
             text = if (termsAccepted) "TERMS ACCEPTED" else "ACCEPT TERMS & POLICY",
             onClick = { termsAccepted = !termsAccepted },
             isActive = termsAccepted,
@@ -76,13 +76,13 @@ fun OnboardingScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        BlockyButton(
+        TacticalButton(
             text = "PLAY",
             onClick = {
                 viewModel.completeOnboarding(username)
                 onComplete()
             },
-            enabled = username.isNotBlank() && termsAccepted,
+            isDisabled = !(username.isNotBlank() && termsAccepted),
             modifier = Modifier.fillMaxWidth().height(56.dp)
         )
     }

@@ -6,7 +6,7 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -20,11 +20,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Paint
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.aswinsalish.buffer.core.theme.AccentColor
+import com.aswinsalish.buffer.core.theme.BackgroundColor
 
 fun Modifier.glow(
     color: Color,
@@ -58,39 +59,46 @@ fun Modifier.glow(
 }
 
 @Composable
-fun BlockyButton(
+fun TacticalButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    isActive: Boolean = false
+    isActive: Boolean = false,
+    isDisabled: Boolean = false,
+    contentPadding: PaddingValues = PaddingValues(16.dp)
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     val isGlowing = isActive || isPressed
 
-    val glowModifier = if (isGlowing && enabled) {
+    val baseColor = Color(0xFF2A2E38)
+    
+    val containerColor = if (isDisabled) Color.DarkGray.copy(alpha = 0.3f) else baseColor
+    val contentColor = if (isDisabled) Color.Gray.copy(alpha = 0.5f) else if (isActive) Color.White else Color.LightGray
+    
+    val borderColor = if (isActive && !isDisabled) AccentColor else if (isDisabled) Color.DarkGray else Color.DarkGray.copy(alpha = 0.5f)
+    val borderWidth = if (isActive && !isDisabled) 2.dp else 1.dp
+
+    val glowModifier = if (isGlowing && !isDisabled) {
         modifier.glow(color = AccentColor)
-    } else {
-        modifier
-    }
+    } else modifier
 
     Button(
         onClick = onClick,
         modifier = glowModifier,
-        enabled = enabled,
-        shape = RectangleShape,
+        enabled = !isDisabled,
+        shape = RoundedCornerShape(0.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = if (isActive) AccentColor else MaterialTheme.colorScheme.surfaceVariant,
-            contentColor = MaterialTheme.colorScheme.onPrimary,
-            disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-            disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+            containerColor = containerColor,
+            contentColor = contentColor,
+            disabledContainerColor = containerColor,
+            disabledContentColor = contentColor
         ),
-        border = BorderStroke(2.dp, if (enabled) AccentColor else Color.DarkGray),
+        border = BorderStroke(borderWidth, borderColor),
         interactionSource = interactionSource,
-        contentPadding = PaddingValues(16.dp)
+        contentPadding = contentPadding
     ) {
-        Text(text)
+        Text(text, fontWeight = FontWeight.Bold)
     }
 }
 
@@ -108,52 +116,14 @@ fun BlockyTextField(
         label = { Text(label) },
         leadingIcon = leadingIcon,
         modifier = modifier.fillMaxWidth(),
-        shape = RectangleShape,
+        shape = RoundedCornerShape(0.dp),
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = AccentColor,
             unfocusedBorderColor = Color.DarkGray,
-            focusedContainerColor = MaterialTheme.colorScheme.background,
-            unfocusedContainerColor = MaterialTheme.colorScheme.background
+            focusedContainerColor = BackgroundColor,
+            unfocusedContainerColor = BackgroundColor
         )
     )
-}
-
-@Composable
-fun LoadoutSquareButton(
-    number: Int,
-    isSelected: Boolean,
-    isOnCooldown: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val borderColor = when {
-        isSelected -> AccentColor
-        isOnCooldown -> Color.DarkGray
-        else -> Color.Gray
-    }
-
-    val borderWidth = if (isSelected) 4.dp else 1.dp
-
-    val glowModifier = if (isSelected) {
-        modifier.glow(color = AccentColor, blurRadius = 8.dp)
-    } else modifier
-
-    Button(
-        onClick = onClick,
-        modifier = glowModifier.size(56.dp),
-        enabled = !isOnCooldown,
-        shape = RectangleShape,
-        colors = ButtonDefaults.buttonColors(
-            containerColor = if (isOnCooldown) Color.DarkGray.copy(alpha = 0.5f) else MaterialTheme.colorScheme.surfaceVariant,
-            contentColor = if (isOnCooldown) Color.Gray else MaterialTheme.colorScheme.onSurface,
-            disabledContainerColor = Color.DarkGray.copy(alpha = 0.3f),
-            disabledContentColor = Color.Gray.copy(alpha = 0.5f)
-        ),
-        border = BorderStroke(borderWidth, borderColor),
-        contentPadding = PaddingValues(0.dp)
-    ) {
-        Text(number.toString(), style = MaterialTheme.typography.titleLarge)
-    }
 }
 
 @Composable

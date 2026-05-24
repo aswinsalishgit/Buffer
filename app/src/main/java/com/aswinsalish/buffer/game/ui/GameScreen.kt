@@ -17,9 +17,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.aswinsalish.buffer.core.components.BlockyButton
+import com.aswinsalish.buffer.core.components.TacticalButton
 import com.aswinsalish.buffer.core.components.BlockyTextField
-import com.aswinsalish.buffer.core.components.LoadoutSquareButton
 import com.aswinsalish.buffer.core.components.StackHeader
 import com.aswinsalish.buffer.core.data.UserPreferencesViewModel
 import com.aswinsalish.buffer.core.theme.AccentColor
@@ -81,11 +80,12 @@ fun GameScreen(
                     (1..5).forEach { num ->
                         val isOnCooldown = uiState.playerBuffer.contains(num)
                         val isSelected = selectedRightHand == num
-                        LoadoutSquareButton(
-                            number = num,
-                            isSelected = isSelected,
-                            isOnCooldown = isOnCooldown,
-                            onClick = { if (uiState.currentPhase == TurnPhase.SELECTING) selectedRightHand = num }
+                        TacticalButton(
+                            text = num.toString(),
+                            isActive = isSelected,
+                            isDisabled = isOnCooldown,
+                            onClick = { if (uiState.currentPhase == TurnPhase.SELECTING) selectedRightHand = num },
+                            modifier = Modifier.size(56.dp)
                         )
                     }
                 }
@@ -99,11 +99,12 @@ fun GameScreen(
                 ) {
                     (1..5).forEach { num ->
                         val isSelected = selectedLeftHand == num
-                        LoadoutSquareButton(
-                            number = num,
-                            isSelected = isSelected,
-                            isOnCooldown = false,
-                            onClick = { if (uiState.currentPhase == TurnPhase.SELECTING) selectedLeftHand = num }
+                        TacticalButton(
+                            text = num.toString(),
+                            isActive = isSelected,
+                            isDisabled = false,
+                            onClick = { if (uiState.currentPhase == TurnPhase.SELECTING) selectedLeftHand = num },
+                            modifier = Modifier.size(56.dp)
                         )
                     }
                 }
@@ -154,7 +155,7 @@ fun GameScreen(
                                 
                                 Spacer(modifier = Modifier.height(32.dp))
                                 
-                                BlockyButton(
+                                TacticalButton(
                                     text = "NEXT ROUND",
                                     onClick = {
                                         selectedRightHand = null
@@ -182,7 +183,7 @@ fun GameScreen(
                             Spacer(modifier = Modifier.height(16.dp))
                             Text("WINNER: ${uiState.matchWinner?.uppercase()}", style = MaterialTheme.typography.headlineLarge, color = AccentColor)
                             Spacer(modifier = Modifier.height(32.dp))
-                            BlockyButton(
+                            TacticalButton(
                                 text = "PLAY AGAIN",
                                 onClick = {
                                     selectedRightHand = null
@@ -215,14 +216,14 @@ fun GameScreen(
             modifier = Modifier.fillMaxWidth()
         ) {
             if (uiState.currentPhase == TurnPhase.SELECTING) {
-                BlockyButton(
+                TacticalButton(
                     text = "EXECUTE",
                     onClick = {
                         if (selectedRightHand != null && selectedLeftHand != null) {
                             gameViewModel.executeTurn(selectedRightHand!!, selectedLeftHand!!)
                         }
                     },
-                    enabled = selectedRightHand != null && selectedLeftHand != null,
+                    isDisabled = !(selectedRightHand != null && selectedLeftHand != null),
                     modifier = Modifier.fillMaxWidth().height(64.dp)
                 )
             } else {
@@ -284,7 +285,7 @@ fun HelpDialog(onDismiss: () -> Unit) {
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
-                BlockyButton(
+                TacticalButton(
                     text = "CLOSE ARCHIVE",
                     onClick = onDismiss,
                     modifier = Modifier.fillMaxWidth().height(56.dp)
@@ -334,7 +335,7 @@ fun SettingsDialog(viewModel: UserPreferencesViewModel, onDismiss: () -> Unit) {
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                BlockyButton(
+                TacticalButton(
                     text = "SAVE CHANGES",
                     onClick = {
                         if (editUsername.isNotBlank()) {
@@ -342,22 +343,22 @@ fun SettingsDialog(viewModel: UserPreferencesViewModel, onDismiss: () -> Unit) {
                             onDismiss()
                         }
                     },
-                    enabled = editUsername.isNotBlank() && editUsername != initialUsername,
+                    isDisabled = !(editUsername.isNotBlank() && editUsername != initialUsername),
                     modifier = Modifier.fillMaxWidth().height(56.dp)
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                BlockyButton(
+                TacticalButton(
                     text = "TERMS OF SERVICE",
                     onClick = { /* TODO: Open TOS Dialog */ },
-                    isActive = false,
+                    isDisabled = true,
                     modifier = Modifier.fillMaxWidth().height(56.dp)
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                BlockyButton(
+                TacticalButton(
                     text = "CLOSE",
                     onClick = onDismiss,
                     modifier = Modifier.fillMaxWidth().height(56.dp)
