@@ -114,7 +114,7 @@ class GameViewModel : ViewModel() {
     fun resetGame(selectedDifficulty: BotDifficulty = BotDifficulty.MEDIUM) {
         _uiState.value = GameState(
             botDifficulty = selectedDifficulty,
-            currentBotMessage = TauntManager.matchStartTaunts.random()
+            currentBotMessage = TauntManager.generateMatchStartTaunt()
         )
     }
 

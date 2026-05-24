@@ -46,21 +46,38 @@ object TauntManager {
         "Sometimes the smartest move is doing exactly what you expect me to do."
     )
 
+    private val shownTaunts = mutableSetOf<String>()
+
+    private fun pickUniqueTaunt(group: List<String>): String {
+        var available = group.filter { it !in shownTaunts }
+        if (available.isEmpty()) {
+            shownTaunts.removeAll(group.toSet())
+            available = group
+        }
+        val picked = available.random()
+        shownTaunts.add(picked)
+        return picked
+    }
+
+    fun generateMatchStartTaunt(): String {
+        return pickUniqueTaunt(matchStartTaunts)
+    }
+
     fun generateTaunt(result: RoundResult, isBlunder: Boolean, isBluff: Boolean): String {
         return when {
-            isBlunder -> blunderTaunts.random()
-            isBluff -> bluffOverrideTaunts.random()
+            isBlunder -> pickUniqueTaunt(blunderTaunts)
+            isBluff -> pickUniqueTaunt(bluffOverrideTaunts)
             result is RoundResult.Success -> {
                 if (result.roundPlay.botWonPoint && !result.roundPlay.playerWonPoint) {
-                    botWinsRoundTaunts.random()
+                    pickUniqueTaunt(botWinsRoundTaunts)
                 } else if (result.roundPlay.playerWonPoint && !result.roundPlay.botWonPoint) {
-                    playerWinsRoundTaunts.random()
+                    pickUniqueTaunt(playerWinsRoundTaunts)
                 } else {
-                    listOf(
+                    pickUniqueTaunt(listOf(
                         "A tie? How remarkably mediocre of us both.",
                         "Neither of us scored. Are we both just randomly flailing?",
                         "I'll allow that round to pass without insult. Barely."
-                    ).random()
+                    ))
                 }
             }
             else -> "Calculating..."

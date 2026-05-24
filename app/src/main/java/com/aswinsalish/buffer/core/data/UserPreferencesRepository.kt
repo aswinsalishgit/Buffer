@@ -16,7 +16,8 @@ val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "us
 data class UserPreferences(
     val username: String?,
     val termsAccepted: Boolean,
-    val defaultDifficulty: BotDifficulty
+    val defaultDifficulty: BotDifficulty,
+    val botInteractionsEnabled: Boolean
 )
 
 class UserPreferencesRepository(private val dataStore: DataStore<Preferences>) {
@@ -25,6 +26,7 @@ class UserPreferencesRepository(private val dataStore: DataStore<Preferences>) {
         val USERNAME = stringPreferencesKey("username")
         val TERMS_ACCEPTED = booleanPreferencesKey("terms_accepted")
         val DEFAULT_DIFFICULTY = stringPreferencesKey("default_difficulty")
+        val BOT_INTERACTIONS_ENABLED = booleanPreferencesKey("bot_interactions_enabled")
     }
 
     val userPreferencesFlow: Flow<UserPreferences> = dataStore.data
@@ -37,7 +39,8 @@ class UserPreferencesRepository(private val dataStore: DataStore<Preferences>) {
             } catch (e: Exception) {
                 BotDifficulty.MEDIUM
             }
-            UserPreferences(username, termsAccepted, difficulty)
+            val botInteractionsEnabled = preferences[BOT_INTERACTIONS_ENABLED] ?: true
+            UserPreferences(username, termsAccepted, difficulty, botInteractionsEnabled)
         }
 
     suspend fun saveUsername(username: String) {
@@ -55,6 +58,12 @@ class UserPreferencesRepository(private val dataStore: DataStore<Preferences>) {
     suspend fun saveDefaultDifficulty(difficulty: BotDifficulty) {
         dataStore.edit { preferences ->
             preferences[DEFAULT_DIFFICULTY] = difficulty.name
+        }
+    }
+
+    suspend fun saveBotInteractionsEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[BOT_INTERACTIONS_ENABLED] = enabled
         }
     }
 }

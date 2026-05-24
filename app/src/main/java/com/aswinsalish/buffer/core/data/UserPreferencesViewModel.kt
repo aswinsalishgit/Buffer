@@ -38,4 +38,10 @@ class UserPreferencesViewModel(application: Application) : AndroidViewModel(appl
             repository.saveDefaultDifficulty(difficulty)
         }
     }
+
+    fun toggleBotInteractions(enabled: Boolean) {
+        viewModelScope.launch {
+            repository.saveBotInteractionsEnabled(enabled)
+        }
+    }
 }

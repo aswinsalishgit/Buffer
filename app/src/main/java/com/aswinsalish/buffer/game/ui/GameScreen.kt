@@ -22,6 +22,16 @@ import com.aswinsalish.buffer.core.components.SettingsDialog
 import com.aswinsalish.buffer.core.components.TacticalButton
 import com.aswinsalish.buffer.core.components.BlockyTextField
 import com.aswinsalish.buffer.core.components.StackHeader
+import com.aswinsalish.buffer.core.components.glow
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.RepeatMode
 import com.aswinsalish.buffer.core.data.UserPreferencesViewModel
 import com.aswinsalish.buffer.core.theme.AccentColor
 import com.aswinsalish.buffer.core.theme.BackgroundColor
@@ -40,6 +50,9 @@ fun GameScreen(
     }
     
     val uiState by gameViewModel.uiState.collectAsState()
+    val prefsState by prefsViewModel.preferencesState.collectAsState()
+    val username = (prefsState as? com.aswinsalish.buffer.core.data.PreferencesState.Loaded)?.prefs?.username ?: "YOU"
+    val botInteractionsEnabled = (prefsState as? com.aswinsalish.buffer.core.data.PreferencesState.Loaded)?.prefs?.botInteractionsEnabled ?: true
     
     var selectedRightHand by remember { mutableStateOf<Int?>(null) }
     var selectedLeftHand by remember { mutableStateOf<Int?>(null) }
@@ -61,9 +74,6 @@ fun GameScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Spacer(modifier = Modifier.width(48.dp)) // To keep text centered
-            
-            val prefsState by prefsViewModel.preferencesState.collectAsState()
-            val username = (prefsState as? com.aswinsalish.buffer.core.data.PreferencesState.Loaded)?.prefs?.username ?: "YOU"
 
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -95,41 +105,52 @@ fun GameScreen(
         }
 
         // Taunt Engine Display
-        var displayedMessage by remember { mutableStateOf<String?>(null) }
-        LaunchedEffect(uiState.currentBotMessage) {
-            if (uiState.currentBotMessage != null) {
-                displayedMessage = uiState.currentBotMessage
-                kotlinx.coroutines.delay(10000)
-                displayedMessage = null
-            }
-        }
-
-        if (displayedMessage != null) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
-            ) {
-                androidx.compose.foundation.Image(
-                    painter = androidx.compose.ui.res.painterResource(id = com.aswinsalish.buffer.R.drawable.bot),
-                    contentDescription = "Bot Avatar",
-                    modifier = Modifier.size(64.dp)
-                )
-                Spacer(modifier = Modifier.width(16.dp))
-                Surface(
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp, 16.dp, 16.dp, 0.dp),
-                    color = Color.DarkGray,
-                    modifier = Modifier.weight(1f)
+        if (botInteractionsEnabled) {
+            val displayedMessage = uiState.currentBotMessage
+            if (displayedMessage != null) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
                 ) {
-                    Text(
-                        text = displayedMessage!!,
-                        modifier = Modifier.padding(12.dp),
-                        color = Color.White,
-                        style = MaterialTheme.typography.bodyMedium
+                    val infiniteTransition = rememberInfiniteTransition()
+                    val glowAlpha by infiniteTransition.animateFloat(
+                        initialValue = 0f,
+                        targetValue = 0.8f,
+                        animationSpec = infiniteRepeatable(
+                            animation = tween(durationMillis = 1000, delayMillis = 6000),
+                            repeatMode = RepeatMode.Reverse
+                        )
                     )
+
+                    androidx.compose.foundation.Image(
+                        painter = androidx.compose.ui.res.painterResource(id = com.aswinsalish.buffer.R.drawable.bot),
+                        contentDescription = "Bot Avatar",
+                        modifier = Modifier.size(64.dp).glow(color = AccentColor, alpha = glowAlpha)
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Surface(
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp, 16.dp, 16.dp, 0.dp),
+                        color = Color.DarkGray,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        AnimatedContent(
+                            targetState = displayedMessage,
+                            transitionSpec = {
+                                fadeIn(animationSpec = tween(500)) togetherWith fadeOut(animationSpec = tween(500))
+                            }
+                        ) { targetMessage ->
+                            Text(
+                                text = targetMessage,
+                                modifier = Modifier.padding(12.dp),
+                                color = Color.White,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                    }
                 }
+            } else {
+                Spacer(modifier = Modifier.height(80.dp)) // Maintain layout stability
             }
-        } else {
-            Spacer(modifier = Modifier.height(80.dp)) // Maintain layout stability
         }
 
         // Center Area (Grid remains persistent in background)
