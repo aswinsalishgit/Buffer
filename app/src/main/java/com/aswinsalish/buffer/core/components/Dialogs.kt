@@ -15,6 +15,8 @@ import androidx.compose.ui.unit.dp
 import com.aswinsalish.buffer.core.data.UserPreferencesViewModel
 import com.aswinsalish.buffer.core.theme.AccentColor
 import com.aswinsalish.buffer.core.theme.BackgroundColor
+import com.aswinsalish.buffer.core.audio.SoundManager
+import com.aswinsalish.buffer.core.audio.SoundType
 
 @Composable
 fun HelpDialog(onDismiss: () -> Unit) {
@@ -71,7 +73,8 @@ fun HelpDialog(onDismiss: () -> Unit) {
                 TacticalButton(
                     text = "CLOSE ARCHIVE",
                     onClick = onDismiss,
-                    modifier = Modifier.fillMaxWidth().height(56.dp)
+                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                    clickSound = SoundType.SWIPE
                 )
             }
         }
@@ -84,6 +87,9 @@ fun SettingsDialog(viewModel: UserPreferencesViewModel, onDismiss: () -> Unit) {
     val initialUsername = (prefsState as? com.aswinsalish.buffer.core.data.PreferencesState.Loaded)?.prefs?.username ?: ""
     val defaultDifficulty = (prefsState as? com.aswinsalish.buffer.core.data.PreferencesState.Loaded)?.prefs?.defaultDifficulty ?: com.aswinsalish.buffer.game.state.BotDifficulty.MEDIUM
     val botInteractionsEnabled = (prefsState as? com.aswinsalish.buffer.core.data.PreferencesState.Loaded)?.prefs?.botInteractionsEnabled ?: true
+    val sfxEnabled = (prefsState as? com.aswinsalish.buffer.core.data.PreferencesState.Loaded)?.prefs?.sfxEnabled ?: true
+    val musicEnabled = (prefsState as? com.aswinsalish.buffer.core.data.PreferencesState.Loaded)?.prefs?.musicEnabled ?: true
+    val musicVolume = (prefsState as? com.aswinsalish.buffer.core.data.PreferencesState.Loaded)?.prefs?.musicVolume ?: 0.5f
     var editUsername by remember { mutableStateOf(initialUsername) }
 
     androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
@@ -131,9 +137,63 @@ fun SettingsDialog(viewModel: UserPreferencesViewModel, onDismiss: () -> Unit) {
                 StackHeader("BOT COMMUNICATIONS")
                 TacticalButton(
                     text = if (botInteractionsEnabled) "ENABLED" else "DISABLED",
-                    onClick = { viewModel.toggleBotInteractions(!botInteractionsEnabled) },
+                    onClick = { 
+                        val newState = !botInteractionsEnabled
+                        SoundManager.playSound(if (newState) SoundType.TOGGLE_ON else SoundType.TOGGLE_OFF)
+                        viewModel.toggleBotInteractions(newState) 
+                    },
                     isActive = botInteractionsEnabled,
-                    modifier = Modifier.fillMaxWidth().height(48.dp)
+                    modifier = Modifier.fillMaxWidth().height(48.dp),
+                    clickSound = null
+                )
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                StackHeader("AUDIO SETTINGS")
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    TacticalButton(
+                        text = if (sfxEnabled) "SFX ON" else "SFX OFF",
+                        onClick = { 
+                            val newState = !sfxEnabled
+                            SoundManager.playSound(if (newState) SoundType.TOGGLE_ON else SoundType.TOGGLE_OFF)
+                            viewModel.toggleSfx(newState) 
+                        },
+                        isActive = sfxEnabled,
+                        modifier = Modifier.weight(1f).height(48.dp),
+                        clickSound = null
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    TacticalButton(
+                        text = if (musicEnabled) "MUSIC ON" else "MUSIC OFF",
+                        onClick = { 
+                            val newState = !musicEnabled
+                            SoundManager.playSound(if (newState) SoundType.TOGGLE_ON else SoundType.TOGGLE_OFF)
+                            viewModel.toggleMusic(newState) 
+                        },
+                        isActive = musicEnabled,
+                        modifier = Modifier.weight(1f).height(48.dp),
+                        clickSound = null
+                    )
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Text(
+                    text = "MUSIC VOLUME",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.LightGray,
+                    modifier = Modifier.align(Alignment.Start)
+                )
+                Slider(
+                    value = musicVolume,
+                    onValueChange = { viewModel.setMusicVolume(it) },
+                    valueRange = 0f..1f,
+                    colors = SliderDefaults.colors(
+                        thumbColor = AccentColor,
+                        activeTrackColor = AccentColor,
+                        inactiveTrackColor = Color.DarkGray
+                    ),
+                    modifier = Modifier.fillMaxWidth()
                 )
 
                 Spacer(modifier = Modifier.height(32.dp))
@@ -164,7 +224,8 @@ fun SettingsDialog(viewModel: UserPreferencesViewModel, onDismiss: () -> Unit) {
                 TacticalButton(
                     text = "CLOSE",
                     onClick = onDismiss,
-                    modifier = Modifier.fillMaxWidth().height(56.dp)
+                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                    clickSound = SoundType.SWIPE
                 )
             }
         }

@@ -37,6 +37,8 @@ import com.aswinsalish.buffer.core.theme.AccentColor
 import com.aswinsalish.buffer.core.theme.BackgroundColor
 import com.aswinsalish.buffer.game.state.TurnPhase
 import com.aswinsalish.buffer.game.viewmodel.GameViewModel
+import com.aswinsalish.buffer.core.audio.SoundManager
+import com.aswinsalish.buffer.core.audio.SoundType
 
 @Composable
 fun GameScreen(
@@ -201,6 +203,14 @@ fun GameScreen(
             if (uiState.currentPhase == TurnPhase.REVEALED) {
                 val play = uiState.currentRoundPlay
                 if (play != null) {
+                    LaunchedEffect(play) {
+                        if (play.playerWonPoint && !play.botWonPoint) {
+                            SoundManager.playSound(SoundType.USER_WON)
+                        } else if (play.botWonPoint && !play.playerWonPoint) {
+                            SoundManager.playSound(SoundType.BOT_WON)
+                        }
+                    }
+
                     androidx.compose.ui.window.Dialog(onDismissRequest = { }) {
                         Card(
                             colors = CardDefaults.cardColors(containerColor = BackgroundColor),
@@ -255,7 +265,17 @@ fun GameScreen(
                         }
                     }
                 }
-            } else if (uiState.currentPhase == TurnPhase.GAME_OVER) {
+            }
+
+            if (uiState.currentPhase == TurnPhase.GAME_OVER) {
+                LaunchedEffect(uiState.matchWinner) {
+                    if (uiState.matchWinner?.equals("Player", ignoreCase = true) == true) {
+                        SoundManager.playSound(SoundType.USER_WON)
+                    } else if (uiState.matchWinner?.equals("Bot", ignoreCase = true) == true) {
+                        SoundManager.playSound(SoundType.BOT_WON)
+                    }
+                }
+
                 androidx.compose.ui.window.Dialog(onDismissRequest = { }) {
                     Card(
                         colors = CardDefaults.cardColors(containerColor = BackgroundColor),
@@ -353,14 +373,16 @@ fun PauseDialog(
                     TacticalButton(
                         text = "RESUME",
                         onClick = onDismiss,
-                        modifier = Modifier.fillMaxWidth().height(56.dp)
+                        modifier = Modifier.fillMaxWidth().height(56.dp),
+                        clickSound = SoundType.SWIPE
                     )
                     Spacer(modifier = Modifier.height(16.dp))
 
                     TacticalButton(
                         text = "EXIT PLAY",
                         onClick = onExitPlay,
-                        modifier = Modifier.fillMaxWidth().height(56.dp)
+                        modifier = Modifier.fillMaxWidth().height(56.dp),
+                        clickSound = SoundType.SWIPE
                     )
                     Spacer(modifier = Modifier.height(16.dp))
 

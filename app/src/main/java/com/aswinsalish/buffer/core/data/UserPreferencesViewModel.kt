@@ -6,9 +6,11 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import com.aswinsalish.buffer.game.state.BotDifficulty
+import com.aswinsalish.buffer.core.audio.SoundManager
 
 sealed class PreferencesState {
     object Loading : PreferencesState()
@@ -19,6 +21,11 @@ class UserPreferencesViewModel(application: Application) : AndroidViewModel(appl
     private val repository = UserPreferencesRepository(application.dataStore)
 
     val preferencesState: StateFlow<PreferencesState> = repository.userPreferencesFlow
+        .onEach { prefs ->
+            SoundManager.isSfxEnabled = prefs.sfxEnabled
+            SoundManager.musicVolume = prefs.musicVolume
+            SoundManager.isMusicEnabled = prefs.musicEnabled
+        }
         .map { PreferencesState.Loaded(it) }
         .stateIn(
             scope = viewModelScope,
@@ -42,6 +49,24 @@ class UserPreferencesViewModel(application: Application) : AndroidViewModel(appl
     fun toggleBotInteractions(enabled: Boolean) {
         viewModelScope.launch {
             repository.saveBotInteractionsEnabled(enabled)
+        }
+    }
+
+    fun toggleSfx(enabled: Boolean) {
+        viewModelScope.launch {
+            repository.saveSfxEnabled(enabled)
+        }
+    }
+
+    fun toggleMusic(enabled: Boolean) {
+        viewModelScope.launch {
+            repository.saveMusicEnabled(enabled)
+        }
+    }
+
+    fun setMusicVolume(volume: Float) {
+        viewModelScope.launch {
+            repository.saveMusicVolume(volume)
         }
     }
 }

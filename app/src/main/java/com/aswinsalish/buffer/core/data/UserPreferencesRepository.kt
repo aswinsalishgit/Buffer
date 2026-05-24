@@ -17,7 +17,10 @@ data class UserPreferences(
     val username: String?,
     val termsAccepted: Boolean,
     val defaultDifficulty: BotDifficulty,
-    val botInteractionsEnabled: Boolean
+    val botInteractionsEnabled: Boolean,
+    val sfxEnabled: Boolean,
+    val musicEnabled: Boolean,
+    val musicVolume: Float
 )
 
 class UserPreferencesRepository(private val dataStore: DataStore<Preferences>) {
@@ -27,6 +30,9 @@ class UserPreferencesRepository(private val dataStore: DataStore<Preferences>) {
         val TERMS_ACCEPTED = booleanPreferencesKey("terms_accepted")
         val DEFAULT_DIFFICULTY = stringPreferencesKey("default_difficulty")
         val BOT_INTERACTIONS_ENABLED = booleanPreferencesKey("bot_interactions_enabled")
+        val SFX_ENABLED = booleanPreferencesKey("sfx_enabled")
+        val MUSIC_ENABLED = booleanPreferencesKey("music_enabled")
+        val MUSIC_VOLUME = androidx.datastore.preferences.core.floatPreferencesKey("music_volume")
     }
 
     val userPreferencesFlow: Flow<UserPreferences> = dataStore.data
@@ -40,7 +46,10 @@ class UserPreferencesRepository(private val dataStore: DataStore<Preferences>) {
                 BotDifficulty.MEDIUM
             }
             val botInteractionsEnabled = preferences[BOT_INTERACTIONS_ENABLED] ?: true
-            UserPreferences(username, termsAccepted, difficulty, botInteractionsEnabled)
+            val sfxEnabled = preferences[SFX_ENABLED] ?: true
+            val musicEnabled = preferences[MUSIC_ENABLED] ?: true
+            val musicVolume = preferences[MUSIC_VOLUME] ?: 0.5f
+            UserPreferences(username, termsAccepted, difficulty, botInteractionsEnabled, sfxEnabled, musicEnabled, musicVolume)
         }
 
     suspend fun saveUsername(username: String) {
@@ -64,6 +73,24 @@ class UserPreferencesRepository(private val dataStore: DataStore<Preferences>) {
     suspend fun saveBotInteractionsEnabled(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[BOT_INTERACTIONS_ENABLED] = enabled
+        }
+    }
+
+    suspend fun saveSfxEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[SFX_ENABLED] = enabled
+        }
+    }
+
+    suspend fun saveMusicEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[MUSIC_ENABLED] = enabled
+        }
+    }
+
+    suspend fun saveMusicVolume(volume: Float) {
+        dataStore.edit { preferences ->
+            preferences[MUSIC_VOLUME] = volume
         }
     }
 }

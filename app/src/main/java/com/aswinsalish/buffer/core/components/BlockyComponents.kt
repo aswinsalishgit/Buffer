@@ -26,6 +26,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.aswinsalish.buffer.core.theme.AccentColor
 import com.aswinsalish.buffer.core.theme.BackgroundColor
+import com.aswinsalish.buffer.core.audio.SoundManager
+import com.aswinsalish.buffer.core.audio.SoundType
 
 fun Modifier.glow(
     color: Color,
@@ -65,7 +67,8 @@ fun TacticalButton(
     modifier: Modifier = Modifier,
     isActive: Boolean = false,
     isDisabled: Boolean = false,
-    contentPadding: PaddingValues = PaddingValues(16.dp)
+    contentPadding: PaddingValues = PaddingValues(16.dp),
+    clickSound: SoundType? = SoundType.CLICK
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
@@ -84,7 +87,10 @@ fun TacticalButton(
     } else modifier
 
     Button(
-        onClick = onClick,
+        onClick = {
+            clickSound?.let { SoundManager.playSound(it) }
+            onClick()
+        },
         modifier = glowModifier,
         enabled = !isDisabled,
         shape = RoundedCornerShape(0.dp),
